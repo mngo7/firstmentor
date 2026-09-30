@@ -1,0 +1,7 @@
+services:
+  mentor-match:
+    image: 10.0.0.253:5000/mentor-match:latest
+    pull_policy: always
+    ports:
+      - "3800:3800"
+    restart: unless-stopped
