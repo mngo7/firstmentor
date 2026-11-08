@@ -23,11 +23,14 @@ export function safeEqual(a: string, b: string): boolean {
   return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
 }
 
-// Stable public ID for a sheet row, so profiles can be linked without exposing emails
-export function profileIdFor(row: { email?: string; teamNumber?: string; firstName?: string; lastName?: string }): string {
-  const key = [row.email, row.teamNumber, row.firstName, row.lastName]
-    .map(v => (v || '').trim().toLowerCase())
-    .join('|');
+// Stable public ID for a sheet row, so profiles can be linked without exposing emails.
+// Members are identified by their account email (so editing their name or team keeps the link);
+// listed teams by contact email + program + team number (one contact can be listed for several teams).
+export function profileIdFor(row: { email?: string; isListedTeam?: boolean; program?: string; teamNumber?: string }): string {
+  const norm = (v?: string) => (v || '').trim().toLowerCase();
+  const key = row.isListedTeam
+    ? `team|${norm(row.email)}|${norm(row.program)}|${norm(row.teamNumber)}`
+    : `member|${norm(row.email)}`;
   return hmac(`profile:${key}`).slice(0, 16);
 }
 

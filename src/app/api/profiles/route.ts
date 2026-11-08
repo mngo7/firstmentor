@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllProfiles } from '@/lib/profiles';
+import { getAllProfiles, isVisibleProfile, toPublicProfile } from '@/lib/profiles';
 import { getSession } from '@/lib/auth';
 
 // 禁用缓存，确保每次请求都获取最新数据
@@ -20,9 +20,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 隐藏空白账号（没有姓名、队伍信息的注册账号），并且不向浏览器暴露 email
-    const publicProfiles = data
-      .filter(profile => profile.name.trim() || profile.lastName.trim() || profile.teamName.trim() || profile.teamNumber.trim())
-      .map(({ email, ...profile }) => ({ ...profile, canConnect: !!email }));
+    const publicProfiles = data.filter(isVisibleProfile).map(toPublicProfile);
 
     // 设置响应头，禁用浏览器和CDN缓存
     const response = NextResponse.json(publicProfiles);

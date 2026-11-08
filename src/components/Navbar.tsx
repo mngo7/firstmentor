@@ -102,6 +102,12 @@ export default function Navbar() {
               Mentor Search
             </Link>
             <Link
+              href="/messages"
+              className={`${isActive('/messages')} px-4 py-2 rounded-lg text-base font-medium transition-all duration-200 hover:bg-gray-50`}
+            >
+              Message Teams
+            </Link>
+            <Link
               href="/how-to-guide"
               className={`${isActive('/how-to-guide')} px-4 py-2 rounded-lg text-base font-medium transition-all duration-200 hover:bg-gray-50`}
             >
@@ -220,6 +226,13 @@ export default function Navbar() {
                 className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/mentor-match')}`}
               >
                 Mentor Search
+              </Link>
+              <Link
+                href="/messages"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/messages')}`}
+              >
+                Message Teams
               </Link>
               <Link
                 href="/how-to-guide"

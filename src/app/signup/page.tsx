@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
 import Link from 'next/link';
@@ -72,7 +72,7 @@ const experienceOptions = [
   { id: 'extensive', name: 'Extensive - I have mentored multiple teams or seasons' },
   { id: 'moderate', name: 'Moderate - I have mentored at least once' },
   { id: 'limited', name: 'Limited - I have helped a team briefly' },
-  { id: 'none', name: 'None - I am new to FLL mentoring' },
+  { id: 'none', name: 'None - I am new to mentoring' },
   { id: 'other', name: 'I have other relevant experience' },
 ];
 
@@ -170,6 +170,33 @@ export default function SignUp() {
     password: '',
     confirmPassword: ''
   });
+
+  const [joiningTeam, setJoiningTeam] = useState<string | null>(null);
+
+  // Invite links from listed-team emails look like /signup?team=<profile id>; prefill that team's details
+  useEffect(() => {
+    const teamId = new URLSearchParams(window.location.search).get('team');
+    if (!teamId) return;
+    fetch('/api/profiles')
+      .then(res => (res.ok ? res.json() : []))
+      .then((profiles: any[]) => {
+        const team = profiles.find(p => p.id === teamId && p.isListedTeam);
+        if (!team) return;
+        const isUS = (team.country || '').toLowerCase() === 'united states';
+        const stateId = isUS ? stateOptions.find(st => st.name.toLowerCase() === (team.state || '').toLowerCase())?.id || '' : '';
+        setFormData(prev => ({
+          ...prev,
+          role: 'coach',
+          program: programOptions.some(o => o.id === team.program) ? [team.program] : prev.program,
+          teamNumber: team.teamNumber || '',
+          teamName: team.teamName || '',
+          country: team.country || '',
+          state: isUS ? stateId : '',
+        }));
+        setJoiningTeam([team.program, team.teamNumber ? `#${team.teamNumber}` : '', team.teamName].filter(Boolean).join(' '));
+      })
+      .catch(() => {});
+  }, []);
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -276,6 +303,12 @@ export default function SignUp() {
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
             Create Your Account
           </h2>
+
+          {joiningTeam && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200 text-sm text-gray-700">
+              You&apos;re joining as <strong>{joiningTeam}</strong>. We&apos;ve filled in your team details. Check them and add your name and email.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email and Password - Always visible */}

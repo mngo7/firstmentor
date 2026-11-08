@@ -11,6 +11,8 @@ type FilterOption = {
 const roleOptions = [
   { id: 'mentor', name: 'Mentors' },
   { id: 'mentee', name: 'Mentees' },
+  { id: 'member', name: 'All members' },
+  { id: 'listed', name: 'Listed teams (not yet joined)' },
 ];
 
 const programOptions = [
@@ -118,12 +120,14 @@ const countryOptions = [
   { id: 'Canada', name: 'Canada' },
   { id: 'Chile', name: 'Chile' },
   { id: 'China', name: 'China' },
+  { id: 'Chinese Taipei', name: 'Chinese Taipei' },
   { id: 'Colombia', name: 'Colombia' },
   { id: 'Costa Rica', name: 'Costa Rica' },
   { id: 'Czech Republic', name: 'Czech Republic' },
   { id: 'Denmark', name: 'Denmark' },
   { id: 'Ecuador', name: 'Ecuador' },
   { id: 'Estonia', name: 'Estonia' },
+  { id: 'Ethiopia', name: 'Ethiopia' },
   { id: 'Finland', name: 'Finland' },
   { id: 'France', name: 'France' },
   { id: 'Germany', name: 'Germany' },
@@ -139,13 +143,17 @@ const countryOptions = [
   { id: 'Kazakhstan', name: 'Kazakhstan' },
   { id: 'Kuwait', name: 'Kuwait' },
   { id: 'Latvia', name: 'Latvia' },
+  { id: 'Libya', name: 'Libya' },
   { id: 'Lithuania', name: 'Lithuania' },
   { id: 'Luxembourg', name: 'Luxembourg' },
   { id: 'Malaysia', name: 'Malaysia' },
   { id: 'Mexico', name: 'Mexico' },
+  { id: 'Mongolia', name: 'Mongolia' },
+  { id: 'Morocco', name: 'Morocco' },
   { id: 'Netherlands', name: 'Netherlands' },
   { id: 'New Zealand', name: 'New Zealand' },
   { id: 'Norway', name: 'Norway' },
+  { id: 'Other', name: 'Other' },
   { id: 'Panama', name: 'Panama' },
   { id: 'Paraguay', name: 'Paraguay' },
   { id: 'Peru', name: 'Peru' },
@@ -164,7 +172,6 @@ const countryOptions = [
   { id: 'Spain', name: 'Spain' },
   { id: 'Sweden', name: 'Sweden' },
   { id: 'Switzerland', name: 'Switzerland' },
-  { id: 'Taiwan', name: 'Taiwan' },
   { id: 'Thailand', name: 'Thailand' },
   { id: 'Türkiye', name: 'Türkiye' },
   { id: 'Ukraine', name: 'Ukraine' },
@@ -174,7 +181,7 @@ const countryOptions = [
   { id: 'Uruguay', name: 'Uruguay' },
   { id: 'Venezuela', name: 'Venezuela' },
   { id: 'Vietnam', name: 'Vietnam' },
-  { id: 'Other', name: 'Other' },
+  { id: 'Zimbabwe', name: 'Zimbabwe' },
 ];
 
 interface SearchFiltersProps {

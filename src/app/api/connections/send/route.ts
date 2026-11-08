@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth';
 import { getUserByEmail } from '@/lib/googleSheets';
 import { getAllProfiles } from '@/lib/profiles';
 import { escapeHtml, hmac, profileIdFor } from '@/lib/security';
+import { getUnsubscribed, signupUrlFor, unsubscribeUrl } from '@/lib/messaging';
 
 // 简单的内存限流：每个发送者每小时最多 20 个请求
 const RATE_LIMIT = 20;
@@ -59,6 +60,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if ((await getUnsubscribed()).has(recipient.email.toLowerCase())) {
+      return NextResponse.json(
+        { error: 'This contact has unsubscribed from First Mentor emails.' },
+        { status: 400 }
+      );
+    }
+
     if (recipient.email.toLowerCase() === sender.email.toLowerCase()) {
       return NextResponse.json({ error: 'You cannot send a connection request to yourself' }, { status: 400 });
     }
@@ -78,12 +86,7 @@ export async function POST(request: NextRequest) {
     const senderCity = escapeHtml(Array.from(new Set([sender.state, sender.country].filter(Boolean))).join(', '));
     const safeMessage = escapeHtml(message || '');
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const senderProfileUrl = `${baseUrl}/profile/${profileIdFor({
-      email: sender.email,
-      teamNumber: sender.teamNumber,
-      firstName: sender.firstName,
-      lastName: sender.lastName,
-    })}`;
+    const senderProfileUrl = `${baseUrl}/profile/${profileIdFor({ email: sender.email })}`;
 
     // Connection data is carried in the response links and signed, so it can't be forged or altered
     const connectionData = Buffer.from(JSON.stringify({
@@ -284,8 +287,17 @@ export async function POST(request: NextRequest) {
           </div>
         </div>
         
+        ${recipient.isListedTeam ? `
+        <div class="content" style="padding-top: 0;">
+          <div class="notice" style="background: #eff6ff; border-left-color: #3B82F6;">
+            <p style="margin: 0;"><strong>Your team is listed on First Mentor</strong>, a free, volunteer-run site that connects FIRST teams with mentors.
+            <a href="${signupUrlFor(recipient)}" style="color: #2563eb;">Create a free account</a> to update your listing and connect with members.</p>
+          </div>
+        </div>` : ''}
+
         <div class="footer">
           <p style="margin: 0;">This message was sent through First Mentor Platform</p>
+          <p style="margin: 5px 0 0 0;">Don't want emails like this? <a href="${unsubscribeUrl(recipientEmail)}" style="color: #6b7280;">Unsubscribe</a></p>
           <p style="margin: 5px 0 0 0;">Connecting mentors and mentees in the FIRST® and STEM community</p>
         </div>
         </div>
@@ -298,6 +310,7 @@ export async function POST(request: NextRequest) {
       to: recipientEmail,
       subject: 'New Connection Request from First Mentor',
       html: recipientEmailContent,
+      headers: { 'List-Unsubscribe': `<${unsubscribeUrl(recipientEmail)}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
     });
 
     return NextResponse.json({ 

@@ -159,6 +159,10 @@ export default function MentorMatch() {
           return profile.isMentor;
         } else if (selectedRole === 'mentee') {
           return profile.isMentee;
+        } else if (selectedRole === 'member') {
+          return !profile.isListedTeam;
+        } else if (selectedRole === 'listed') {
+          return profile.isListedTeam;
         }
         return true;
       });

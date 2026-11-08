@@ -22,26 +22,37 @@ export function createEmailTransporter() {
 }
 
 // 通用邮件发送函数
-export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
-  console.log('📧 Starting sendEmail process...');
-  console.log('   Target email:', to);
-  console.log('   Subject:', subject);
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  fromName = 'First Mentor',
+  replyTo,
+  headers,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  fromName?: string;
+  replyTo?: string;
+  headers?: Record<string, string>;
+}) {
+  console.log('📧 Sending email:', subject);
   
   const transporter = createEmailTransporter();
   
   const mailOptions = {
-    from: `"First Mentor" <${process.env.EMAIL_USER}>`,
+    from: { name: fromName, address: process.env.EMAIL_USER || '' },
     to,
     subject,
     html,
+    replyTo,
+    headers,
   };
 
-  console.log('📤 Attempting to send email...');
-  
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email sent successfully!');
-    console.log('   Message ID:', info.messageId);
+    console.log('✅ Email sent, message ID:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('❌ Error sending email:', error);
@@ -65,7 +76,7 @@ export async function sendVerificationEmail(email: string, token: string) {
   const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/auth/verify-email?token=${token}`;
   
   const mailOptions = {
-    from: `"Mentor Search" <${process.env.EMAIL_USER}>`,
+    from: `"First Mentor" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Verify Your Email - Mentor Search',
     html: `
@@ -169,7 +180,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
   const transporter = createEmailTransporter();
   
   const mailOptions = {
-    from: `"Mentor Search" <${process.env.EMAIL_USER}>`,
+    from: `"First Mentor" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Welcome to Mentor Search!',
     html: `

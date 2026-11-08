@@ -32,7 +32,7 @@ const experienceOptions = [
   { id: 'extensive', name: 'Extensive - I have mentored multiple teams or seasons' },
   { id: 'moderate', name: 'Moderate - I have mentored at least once' },
   { id: 'limited', name: 'Limited - I have helped a team briefly' },
-  { id: 'none', name: 'None - I am new to FLL mentoring' },
+  { id: 'none', name: 'None - I am new to mentoring' },
   { id: 'other', name: 'I have other relevant experience' },
 ];
 

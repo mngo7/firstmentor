@@ -14,3 +14,4 @@ README.md
 !.env.local
 *.md
 .vscode
+.local-data

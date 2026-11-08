@@ -21,6 +21,7 @@ export interface Profile {
   state: string;
   isMentor: boolean;
   isMentee: boolean;
+  isListedTeam: boolean;  // Imported team listing that hasn't signed up yet
   
   // Role-specific fields
   major?: string;              // Column AB - for university students
@@ -304,6 +305,7 @@ export default function ProfileCard({ profile, autoExpand = false }: ProfileCard
     <div className={`flex gap-2 ${className}`}>
       {profile.isMentor && <Badge text="Mentor" variant="blue" size={size} />}
       {profile.isMentee && <Badge text="Mentee" variant="green" size={size} />}
+      {profile.isListedTeam && <Badge text="Listed team · not yet joined" variant="gray" size={size} />}
     </div>
   );
 
@@ -450,7 +452,7 @@ export default function ProfileCard({ profile, autoExpand = false }: ProfileCard
                         <li><span className="font-medium">Extensive</span> – I have mentored multiple teams or seasons</li>
                         <li><span className="font-medium">Moderate</span> – I have mentored at least once</li>
                         <li><span className="font-medium">Limited</span> – I have helped a team briefly</li>
-                        <li><span className="font-medium">None</span> – I am new to FLL mentoring</li>
+                        <li><span className="font-medium">None</span> – I am new to mentoring</li>
                         <li><span className="font-medium">Other Relevant Experience</span> – I have related skills or experience outside FLL</li>
                       </ul>
                       <p className="text-xs italic">We encourage an inclusive and supportive community where growing mentors are given opportunities, understanding, and guidance as they continue to learn and contribute.</p>
@@ -535,7 +537,7 @@ export default function ProfileCard({ profile, autoExpand = false }: ProfileCard
                         <li><span className="font-medium">Extensive</span> – I have mentored multiple teams or seasons</li>
                         <li><span className="font-medium">Moderate</span> – I have mentored at least once</li>
                         <li><span className="font-medium">Limited</span> – I have helped a team briefly</li>
-                        <li><span className="font-medium">None</span> – I am new to FLL mentoring</li>
+                        <li><span className="font-medium">None</span> – I am new to mentoring</li>
                         <li><span className="font-medium">Other Relevant Experience</span> – I have related skills or experience outside FLL</li>
                       </ul>
                       <p className="text-xs italic">We encourage an inclusive and supportive community where growing mentors are given opportunities, understanding, and guidance as they continue to learn and contribute.</p>
@@ -584,6 +586,11 @@ export default function ProfileCard({ profile, autoExpand = false }: ProfileCard
                   {profile.isMentee && (
                     <span className="inline-block px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
                       Mentee
+                    </span>
+                  )}
+                  {profile.isListedTeam && (
+                    <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium" title="This team is listed on First Mentor but hasn't created an account yet">
+                      Listed team · not yet joined
                     </span>
                   )}
                 </div>

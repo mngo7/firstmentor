@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { createLocalSheetsClient } from './localSheet';
 
 // 州缩写到全称的映射表
 const STATE_ABBREVIATION_MAP: { [key: string]: string } = {
@@ -97,6 +98,11 @@ export const SHEET_COLUMN_MAPPING = {
 
 // Google Sheets 客户端设置
 export async function getGoogleSheetsClient() {
+  // 本地测试：使用本地 JSON 文件代替真实的 Google Sheet
+  if (process.env.LOCAL_SHEET_FILE) {
+    return createLocalSheetsClient(process.env.LOCAL_SHEET_FILE) as unknown as ReturnType<typeof google.sheets>;
+  }
+
   const auth = new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
@@ -154,7 +160,8 @@ export async function getUserByEmail(email: string) {
       const row = rows[i];
       const emailInSheet = row[6]; // Column G (index 6) is email
       
-      if (emailInSheet && emailInSheet.toLowerCase() === email.toLowerCase()) {
+      // 只匹配注册账号（有密码的行）；导入的 listed team 行不是账号
+      if (emailInSheet && row[23] && emailInSheet.trim().toLowerCase() === email.trim().toLowerCase()) {
         const verifiedValue = row[31]; // Column AF - Verification Status
         const isVerified = verifiedValue && verifiedValue.toLowerCase() === 'yes';
         
@@ -344,7 +351,7 @@ export async function updateEmailVerification(email: string, isVerified: boolean
       const row = rows[i];
       const emailInSheet = row[6]; // Column G (index 6) is email
       
-      if (emailInSheet && emailInSheet.toLowerCase() === email.toLowerCase()) {
+      if (emailInSheet && row[23] && emailInSheet.trim().toLowerCase() === email.trim().toLowerCase()) {
         // 3. 更新验证状态（Column AF, index 31）
         const updateRange = `AF${i + 1}`; // +1 because sheets are 1-indexed
         await sheets.spreadsheets.values.update({

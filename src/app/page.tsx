@@ -20,16 +20,12 @@ export default function Home() {
         const response = await fetch('/api/stats');
         if (response.ok) {
           const data = await response.json();
-          setTargetMembers(data.registeredMembers);
-          setTargetTeams(data.firstTeams);
+          setTargetMembers(data.members);
+          setTargetTeams(data.listedTeams);
           setTargetCountries(data.countriesServed);
         }
       } catch (error) {
         console.error('Failed to fetch stats:', error);
-        // 使用默认值
-        setTargetMembers(3233);
-        setTargetTeams(3233);
-        setTargetCountries(43);
       }
     }
 
@@ -54,7 +50,7 @@ export default function Home() {
   }, [isVisible]);
 
   useEffect(() => {
-    if (!isVisible || targetMembers === 0) return;
+    if (!isVisible || (targetMembers === 0 && targetTeams === 0)) return;
 
     // 动画持续时间（毫秒）
     const duration = 2000;
@@ -146,19 +142,19 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="mb-2 text-3xl md:text-4xl font-bold text-white">
-                {membersCount.toLocaleString()}
+                {teamsCount.toLocaleString()}
               </div>
               <div className="text-base text-blue-100">
-                Listed Members
+                Listed Teams
               </div>
             </div>
             
             <div className="text-center">
               <div className="mb-2 text-3xl md:text-4xl font-bold text-white">
-                {teamsCount.toLocaleString()}
+                {membersCount.toLocaleString()}
               </div>
               <div className="text-base text-blue-100">
-                Listed Teams
+                Members
               </div>
             </div>
             
