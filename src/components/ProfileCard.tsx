@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { MapPinIcon, AcademicCapIcon, BriefcaseIcon, BuildingOfficeIcon, UserIcon } from '@heroicons/react/24/outline';
 import Badge from './Badge';
 import ConnectModal from './ConnectModal';
-import UpgradeModal from './UpgradeModal';
 import { TeamInfo } from './TeamInfo';
 import { ProfileLinks } from './ProfileLinks';
 import { SkillsSection } from './SkillsSection';
@@ -22,7 +21,6 @@ export interface Profile {
   state: string;
   isMentor: boolean;
   isMentee: boolean;
-  membershipType?: string;  // Column AK - Membership Type (general/pro)
   
   // Role-specific fields
   major?: string;              // Column AB - for university students
@@ -49,7 +47,7 @@ export interface Profile {
   website?: string;
   linkedin?: string;
   detailedDescription: string;
-  email: string;
+  canConnect: boolean;  // Whether this profile has an email that can receive connection requests
 }
 
 interface ProfileCardProps {
@@ -60,7 +58,6 @@ interface ProfileCardProps {
 export default function ProfileCard({ profile, autoExpand = false }: ProfileCardProps): JSX.Element {
   const [showDetails, setShowDetails] = useState(autoExpand);
   const [showConnectModal, setShowConnectModal] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
 
@@ -85,11 +82,6 @@ export default function ProfileCard({ profile, autoExpand = false }: ProfileCard
   }, []);
 
   const handleConnect = () => {
-    // Check if user is general member trying to connect
-    if (user && user.membershipType === 'general') {
-      setShowUpgradeModal(true);
-      return;
-    }
     setShowConnectModal(true);
   };
 
@@ -100,38 +92,20 @@ export default function ProfileCard({ profile, autoExpand = false }: ProfileCard
         return;
       }
 
-      // Double-check membership type
-      if (user.membershipType === 'general') {
-        setShowUpgradeModal(true);
-        setShowConnectModal(false);
-        return;
-      }
-
-      // Check if profile has a valid email
-      if (!profile.email || 
-          profile.email === 'Coming soon...' || 
-          profile.email === 'N/A' || 
-          !profile.email.includes('@')) {
+      if (!profile.canConnect) {
         alert('Sorry, this user has not provided a valid email address yet. They cannot receive connection requests at this time.');
         setShowConnectModal(false);
         return;
       }
 
-      // Send connection request via API
+      // Send connection request via API (sender details come from the signed-in session)
       const response = await fetch('/api/connections/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          recipientEmail: profile.email,
-          recipientName: profile.name,
-          senderName: `${user.firstName} ${user.lastName}`,
-          senderEmail: user.email,
-          senderRole: user.role === 'university' ? 'university student' : (user.role || 'Member'),
-          senderTeam: user.teamName || '',
-          senderCity: user.city || '',
-          senderProfileUrl: `${window.location.origin}/profile/${encodeURIComponent(user.email || '')}`,
+          recipientId: profile.id,
           message: message,
           requestType: type,
         }),
@@ -163,11 +137,8 @@ export default function ProfileCard({ profile, autoExpand = false }: ProfileCard
     }
   };
 
-  // Check if email is valid
-  const hasValidEmail = profile.email && 
-                        profile.email !== 'Coming soon...' && 
-                        profile.email !== 'N/A' && 
-                        profile.email.includes('@');
+  // Check if this profile can receive connection requests
+  const hasValidEmail = profile.canConnect;
 
   // Prepare display content
   const location = profile.state !== profile.country ? `${profile.country} - ${profile.state}` : profile.country;
@@ -692,10 +663,7 @@ export default function ProfileCard({ profile, autoExpand = false }: ProfileCard
           />
         )}
 
-        <UpgradeModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-        />
+
 
         {renderDetailsModal()}
       </div>

@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { updateUserProfile } from '@/lib/googleSheets';
 
+const EDITABLE_FIELDS = [
+  'firstName', 'lastName', 'role', 'program', 'teamNumber', 'teamName',
+  'universityName', 'companyName', 'affiliation', 'major', 'jobCategory', 'otherSpecialties',
+  'volunteerHoursCreditedTo', 'country', 'state', 'postCode',
+  'isMentor', 'isMentee', 'mentorPrograms', 'mentorSpecialties', 'availability', 'mentorExperience',
+  'menteeNeeds', 'menteePreferredMeeting', 'menteeRequiredExperience',
+  'additionalInfo', 'website', 'linkedin',
+];
+
 export async function PUT(request: Request) {
   try {
     const session = await getSession();
@@ -13,15 +22,15 @@ export async function PUT(request: Request) {
       );
     }
 
-    const updates = await request.json();
+    const body = await request.json();
 
-    // 不允许更新某些敏感字段
-    const forbiddenFields = ['email', 'password', 'isVerified', 'verificationToken'];
-    forbiddenFields.forEach(field => {
-      if (updates[field]) {
-        delete updates[field];
+    // 只允许更新个人资料字段（不包括 email、password、验证状态等）
+    const updates: Record<string, unknown> = {};
+    for (const field of EDITABLE_FIELDS) {
+      if (field in body) {
+        updates[field] = body[field];
       }
-    });
+    }
 
     // 更新用户信息
     const result = await updateUserProfile(session.email, updates);

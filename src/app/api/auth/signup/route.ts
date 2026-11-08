@@ -15,9 +15,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // 检查是否为general member（简化注册）
-    const isGeneralMember = data.membershipType === 'general';
-
     // 2. 检查邮箱是否已存在
     const existingUser = await getUserByEmail(data.email);
     if (existingUser) {
@@ -34,43 +31,22 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(data.password, 10);
     
     // 5. 准备表单数据
-    let formData;
-    if (isGeneralMember) {
-      // General Member: 仅包含邮箱、密码和会员类型
-      formData = {
-        email: data.email,
-        password: hashedPassword,
-        membershipType: 'general',
-        verificationToken,
-        isVerified: false,
-        // 其他字段留空
-        firstName: '',
-        lastName: '',
-        isMentor: false,
-        isMentee: false,
-      };
-    } else {
-      // Pro Member: 完整信息
-      formData = {
-        ...data,
-        password: hashedPassword,
-        membershipType: 'pro',
-        verificationToken,
-        isVerified: false,
-      };
-    }
-
-    console.log('📝 FormData keys:', Object.keys(formData));
-    console.log('📝 Membership type:', formData.membershipType);
-    console.log('📝 FormData values check:', {
-      hasEmail: !!formData.email,
-      hasPassword: !!formData.password,
-      passwordLength: formData.password?.length || 0,
-      hasToken: !!formData.verificationToken,
-      tokenLength: formData.verificationToken?.length || 0,
-      isVerified: formData.isVerified,
-      membershipType: formData.membershipType,
-    });
+    // 只保留表单字段；验证状态、token、付费辅导等字段由服务端控制
+    const {
+      isVerified: _isVerified,
+      verificationToken: _verificationToken,
+      membershipType: _membershipType,
+      volunteerMentoring: _volunteerMentoring,
+      paidMentoring: _paidMentoring,
+      hourlyRateRange: _hourlyRateRange,
+      ...profileData
+    } = data;
+    const formData = {
+      ...profileData,
+      password: hashedPassword,
+      verificationToken,
+      isVerified: false,
+    };
 
     // 6. 转换数据并保存到 Google Sheet
     console.log('💾 Saving user data to Google Sheets...');
@@ -97,17 +73,14 @@ export async function POST(request: Request) {
     // 8. 返回成功响应
     return NextResponse.json({
       status: 'success',
-      message: isGeneralMember 
-        ? 'General Member account created successfully. Please check your email to verify your account.'
-        : 'Pro Member account created successfully. Please check your email to verify your account.'
+      message: 'Account created successfully. Please check your email to verify your account.'
     });
 
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
       { 
-        error: 'Registration failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Registration failed'
       },
       { status: 500 }
     );

@@ -70,7 +70,6 @@ export const SHEET_COLUMN_MAPPING = {
   jobCategory: 'AC',       // Job Title (for professional)
   otherSpecialties: 'AD',  // Your Specialties (for others)
   volunteerHoursCreditedTo: 'S', // Volunteer hours credited to which team/person
-  contributeTo: 'S',       // Contribute To (legacy)
   country: 'A',            // Country
   state: 'B',              // State
   postCode: 'T',           // Post Code
@@ -93,7 +92,7 @@ export const SHEET_COLUMN_MAPPING = {
   paidMentoring: 'AH',     // Paid Mentoring
   hourlyRateRange: 'AI',   // Hourly Rate Range
   mentorPrograms: 'AJ',    // Programs (Mentoring preference)
-  membershipType: 'AK'     // Membership Type (general/pro)
+  membershipType: 'AK'     // Membership Type (legacy, no longer written)
 };
 
 // Google Sheets 客户端设置
@@ -114,13 +113,13 @@ export async function getGoogleSheetsClient() {
 export async function appendToSheet(values: any[]) {
   const sheets = await getGoogleSheetsClient();
   const spreadsheetId = process.env.GOOGLE_SHEETS_ID;
-  const range = 'A2:AJ2'; // 从第二行开始，覆盖所有需要的列 (A-AJ = 36列)
+  const range = 'A:AK'; // 覆盖所有列 (A-AK = 37列)
 
   try {
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId,
       range,
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW', // RAW so user input is never evaluated as a formula
       requestBody: {
         values: [values],
       },
@@ -137,7 +136,7 @@ export async function appendToSheet(values: any[]) {
 export async function getUserByEmail(email: string) {
   const sheets = await getGoogleSheetsClient();
   const spreadsheetId = process.env.GOOGLE_SHEETS_ID;
-  const range = 'A:AK'; // 读取到 Column AK (包含membershipType)
+  const range = 'A:AK'; // 读取到 Column AK
 
   try {
     const response = await sheets.spreadsheets.values.get({
@@ -169,7 +168,6 @@ export async function getUserByEmail(email: string) {
           program: row[2], // Column C - Program
           teamNumber: row[4], // Column E - Team Number
           teamName: row[5], // Column F - Team Name
-          membershipType: row[36] || 'pro', // Column AK - Membership Type (default 'pro' for existing users)
           universityName: row[24], // Column Y - University Name
           companyName: row[25], // Column Z - Company Name
           affiliation: row[26], // Column AA - Affiliation
@@ -352,7 +350,7 @@ export async function updateEmailVerification(email: string, isVerified: boolean
         await sheets.spreadsheets.values.update({
           spreadsheetId,
           range: updateRange,
-          valueInputOption: 'USER_ENTERED',
+          valueInputOption: 'RAW', // RAW so user input is never evaluated as a formula
           requestBody: {
             values: [['Yes']],
           },
@@ -363,7 +361,7 @@ export async function updateEmailVerification(email: string, isVerified: boolean
         await sheets.spreadsheets.values.update({
           spreadsheetId,
           range: tokenRange,
-          valueInputOption: 'USER_ENTERED',
+          valueInputOption: 'RAW', // RAW so user input is never evaluated as a formula
           requestBody: {
             values: [['']],
           },
@@ -422,103 +420,6 @@ export async function getUserByVerificationToken(token: string) {
   }
 }
 
-// 更新用户的密码重置token
-export async function updatePasswordResetToken(email: string, token: string, expiry: Date) {
-  try {
-    console.log('🔐 Updating password reset token for:', email);
-    
-    const user = await getUserByEmail(email);
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    const sheets = await getGoogleSheetsClient();
-    const spreadsheetId = process.env.GOOGLE_SHEETS_ID!;
-    
-    // Column AG (index 32) for reset token, Column AH (index 33) for expiry
-    const resetTokenCol = 'AG';
-    const expiryCol = 'AH';
-    
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${resetTokenCol}${user.rowIndex}`,
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: [[token]],
-      },
-    });
-    
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${expiryCol}${user.rowIndex}`,
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: [[expiry.toISOString()]],
-      },
-    });
-    
-    console.log('✅ Password reset token updated successfully');
-    return true;
-  } catch (error) {
-    console.error('❌ Error updating password reset token:', error);
-    throw error;
-  }
-}
-
-// 通过密码重置token获取用户
-export async function getUserByResetToken(token: string) {
-  try {
-    console.log('🔍 Looking up user by reset token');
-    const sheets = await getGoogleSheetsClient();
-    const spreadsheetId = process.env.GOOGLE_SHEETS_ID;
-    const range = 'A:AH'; // Include columns up to AH (expiry)
-    
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range,
-    });
-    
-    const rows = response.data.values;
-    if (!rows || rows.length === 0) {
-      return null;
-    }
-    
-    // Find user by reset token (Column AG, index 32)
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      const resetToken = row[32]; // Column AG (index 32)
-      const expiry = row[33]; // Column AH (index 33)
-      
-      if (resetToken === token) {
-        // Check if token is expired
-        if (expiry) {
-          const expiryDate = new Date(expiry);
-          if (expiryDate < new Date()) {
-            console.log('⚠️ Reset token has expired');
-            return null;
-          }
-        }
-        
-        const email = row[6]; // Column G (index 6)
-        console.log('✅ Found user with valid reset token');
-        
-        return {
-          email,
-          rowIndex: i + 1, // 1-indexed for Sheets
-          resetToken,
-          expiry
-        };
-      }
-    }
-    
-    console.log('❌ No user found with this reset token');
-    return null;
-  } catch (error) {
-    console.error('❌ Error getting user by reset token:', error);
-    throw error;
-  }
-}
-
 // 更新用户密码
 export async function updateUserPassword(email: string, hashedPassword: string) {
   try {
@@ -531,40 +432,15 @@ export async function updateUserPassword(email: string, hashedPassword: string) 
 
     const sheets = await getGoogleSheetsClient();
     const spreadsheetId = process.env.GOOGLE_SHEETS_ID!;
-    
+    const rowNumber = user.rowIndex + 1; // Sheets 是 1-indexed
+
     // Column X (index 23) for password
-    const passwordCol = 'X';
-    // Clear reset token (Column AG) and expiry (Column AH)
-    const resetTokenCol = 'AG';
-    const expiryCol = 'AH';
-    
-    // Update password
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `${passwordCol}${user.rowIndex}`,
+      range: `X${rowNumber}`,
       valueInputOption: 'RAW',
       requestBody: {
         values: [[hashedPassword]],
-      },
-    });
-    
-    // Clear reset token
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${resetTokenCol}${user.rowIndex}`,
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: [['']],
-      },
-    });
-    
-    // Clear expiry
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${expiryCol}${user.rowIndex}`,
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: [['']],
       },
     });
     
@@ -603,7 +479,7 @@ export async function updateUserProfile(email: string, updates: any) {
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: updateRange,
-        valueInputOption: 'USER_ENTERED',
+        valueInputOption: 'RAW', // RAW so user input is never evaluated as a formula
         requestBody: {
           values: [[value || '']],
         },

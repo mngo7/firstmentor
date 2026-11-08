@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { generateToken } from './security';
 
 // 创建邮件传输器
 export function createEmailTransporter() {
@@ -50,7 +51,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
 
 // 生成验证token
 export function generateVerificationToken(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  return generateToken();
 }
 
 // 发送验证邮件

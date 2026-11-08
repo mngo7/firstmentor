@@ -1,9 +1,9 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import { createHash } from 'crypto';
+import { getServerSecret } from './security';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
-);
+const getJwtSecret = () => new TextEncoder().encode(getServerSecret());
 
 const COOKIE_NAME = 'session';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -21,7 +21,7 @@ export async function createSession(userData: SessionData) {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 
   return token;
 }
@@ -29,7 +29,7 @@ export async function createSession(userData: SessionData) {
 // 验证 JWT token
 export async function verifySession(token: string): Promise<SessionData | null> {
   try {
-    const verified = await jwtVerify(token, JWT_SECRET);
+    const verified = await jwtVerify(token, getJwtSecret());
     return verified.payload.user as SessionData;
   } catch (error) {
     console.error('Token verification failed:', error);
@@ -65,4 +65,32 @@ export async function setSessionCookie(token: string) {
 export async function deleteSessionCookie() {
   const cookieStore = await cookies();
   cookieStore.delete(COOKIE_NAME);
+}
+
+// 密码重置 token：签名 + 1 小时过期，并绑定当前密码哈希（密码修改后自动失效）
+const passwordFingerprint = (passwordHash: string | undefined) =>
+  createHash('sha256').update(passwordHash || '').digest('hex').slice(0, 16);
+
+export async function createPasswordResetToken(email: string, passwordHash: string | undefined) {
+  return new SignJWT({ purpose: 'password-reset', email, pf: passwordFingerprint(passwordHash) })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('1h')
+    .sign(getJwtSecret());
+}
+
+export async function verifyPasswordResetToken(token: string, currentPasswordHash: (email: string) => Promise<string | undefined | null>) {
+  try {
+    const { payload } = await jwtVerify(token, getJwtSecret());
+    if (payload.purpose !== 'password-reset' || typeof payload.email !== 'string') {
+      return null;
+    }
+    const hash = await currentPasswordHash(payload.email);
+    if (hash === null || payload.pf !== passwordFingerprint(hash)) {
+      return null;
+    }
+    return payload.email;
+  } catch {
+    return null;
+  }
 }

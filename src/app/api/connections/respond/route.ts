@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email';
+import { escapeHtml, hmac, safeEqual } from '@/lib/security';
+
+const VALID_RESPONSES = ['accept', 'maybe', 'decline'];
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,20 +11,29 @@ export async function GET(request: NextRequest) {
     const response = searchParams.get('response'); // 'accept', 'maybe', 'decline'
     const dataParam = searchParams.get('data');
 
-    if (!token || !response || !dataParam) {
+    if (!token || !response || !dataParam || !VALID_RESPONSES.includes(response)) {
+      return NextResponse.redirect(new URL('/?error=invalid-request', request.url));
+    }
+
+    // The link is signed when the request is sent; reject anything forged or altered
+    if (!safeEqual(token, hmac(`connection:${dataParam}`))) {
       return NextResponse.redirect(new URL('/?error=invalid-request', request.url));
     }
 
     // Decode connection data
     let connectionData;
     try {
-      connectionData = JSON.parse(Buffer.from(dataParam, 'base64').toString('utf-8'));
+      connectionData = JSON.parse(Buffer.from(dataParam, 'base64url').toString('utf-8'));
     } catch (error) {
       console.error('Error decoding connection data:', error);
       return NextResponse.redirect(new URL('/?error=invalid-data', request.url));
     }
 
-    const { senderEmail, senderName, recipientName, recipientEmail } = connectionData;
+    const { senderEmail, recipientId } = connectionData;
+    const senderName = escapeHtml(connectionData.senderName || 'there');
+    const recipientName = escapeHtml(connectionData.recipientName || 'A First Mentor member');
+    const recipientEmail = escapeHtml(connectionData.recipientEmail);
+    const recipientProfileId = encodeURIComponent(recipientId || '');
     
     // Send response email to original sender
     let emailSubject = '';
@@ -30,7 +42,7 @@ export async function GET(request: NextRequest) {
     switch (response) {
       case 'accept':
         emailSubject = 'Great News — Connection Accepted on First Mentor';
-        emailContent = generateAcceptEmail(senderName, recipientName, recipientEmail);
+        emailContent = generateAcceptEmail(senderName, recipientName, recipientEmail, recipientProfileId);
         break;
       case 'maybe':
         emailSubject = 'Connection Response — Maybe Later';
@@ -125,7 +137,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function generateAcceptEmail(senderName: string, recipientName: string, recipientEmail: string): string {
+function generateAcceptEmail(senderName: string, recipientName: string, recipientEmail: string, recipientProfileId: string): string {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   return `
     <!DOCTYPE html>
@@ -194,7 +206,7 @@ function generateAcceptEmail(senderName: string, recipientName: string, recipien
           
           <div class="highlight-box">
             <p style="margin: 0 0 10px 0; font-size: 15px;"><strong>📧 Contact Email:</strong> <span style="color: #059669; font-size: 16px;">${recipientEmail}</span></p>
-            <p style="margin: 0; font-size: 15px;"><strong>👤 Profile:</strong> <a href="${baseUrl}/profile/${encodeURIComponent(recipientEmail)}" style="color: #3B82F6; text-decoration: none;">View Full Profile</a></p>
+            <p style="margin: 0; font-size: 15px;"><strong>👤 Profile:</strong> <a href="${baseUrl}/profile/${recipientProfileId}" style="color: #3B82F6; text-decoration: none;">View Full Profile</a></p>
           </div>
           
           <p>You can continue the conversation by reaching out directly to this email address.</p>

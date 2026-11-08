@@ -58,7 +58,6 @@ interface UserProfile {
   major?: string;
   jobCategory?: string;
   otherSpecialties?: string;
-  contributeTo?: string;
   country?: string;
   state?: string;
   postCode?: string;
@@ -73,9 +72,6 @@ interface UserProfile {
   additionalInfo?: string;
   website?: string;
   linkedin?: string;
-  volunteerMentoring?: string;
-  paidMentoring?: string;
-  hourlyRateRange?: string;
   volunteerHoursCreditedTo?: string;
   mentorPrograms?: string;
 }
@@ -603,76 +599,21 @@ export default function MyAccountPage() {
               </div>
             </section>
 
-            {/* Mentorship Type */}
+            {/* Volunteer Hours */}
             <section>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Mentorship Type</h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Volunteer Mentoring</label>
-                    {isEditing ? (
-                      <select
-                        value={editedUser?.volunteerMentoring || ''}
-                        onChange={(e) => handleChange('volunteerMentoring', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="">Not selected</option>
-                        <option value="yes">Yes</option>
-                      </select>
-                    ) : (
-                      <p className="px-3 py-2 bg-gray-50 rounded-lg">{user.volunteerMentoring === 'yes' ? 'Yes' : 'N/A'}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Paid Mentoring</label>
-                    {isEditing ? (
-                      <select
-                        value={editedUser?.paidMentoring || ''}
-                        onChange={(e) => handleChange('paidMentoring', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="">Not selected</option>
-                        <option value="yes">Yes</option>
-                      </select>
-                    ) : (
-                      <p className="px-3 py-2 bg-gray-50 rounded-lg">{user.paidMentoring === 'yes' ? 'Yes' : 'N/A'}</p>
-                    )}
-                  </div>
-                </div>
-
-                {(isEditing ? editedUser?.volunteerMentoring === 'yes' : user.volunteerMentoring === 'yes') && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Volunteer hours credited to which team/person</label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedUser?.volunteerHoursCreditedTo || ''}
-                        onChange={(e) => handleChange('volunteerHoursCreditedTo', e.target.value)}
-                        placeholder="Enter team number or person name"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    ) : (
-                      <p className="px-3 py-2 bg-gray-50 rounded-lg">{user.volunteerHoursCreditedTo || 'N/A'}</p>
-                    )}
-                  </div>
-                )}
-
-                {(isEditing ? editedUser?.paidMentoring === 'yes' : user.paidMentoring === 'yes') && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Hourly rate range($)</label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedUser?.hourlyRateRange || ''}
-                        onChange={(e) => handleChange('hourlyRateRange', e.target.value)}
-                        placeholder="e.g., $50-100/hour"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    ) : (
-                      <p className="px-3 py-2 bg-gray-50 rounded-lg">{user.hourlyRateRange || 'N/A'}</p>
-                    )}
-                  </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Volunteer Hours</h2>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Volunteer hours credited to which team/person</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedUser?.volunteerHoursCreditedTo || ''}
+                    onChange={(e) => handleChange('volunteerHoursCreditedTo', e.target.value)}
+                    placeholder="Enter team number or person name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                ) : (
+                  <p className="px-3 py-2 bg-gray-50 rounded-lg">{user.volunteerHoursCreditedTo || 'N/A'}</p>
                 )}
               </div>
             </section>
@@ -722,7 +663,7 @@ export default function MyAccountPage() {
                     <h3 className="text-lg font-semibold text-blue-900">As a Mentor</h3>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Programs (Mentoring preference)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Programs you can mentor</label>
                       {isEditing ? (
                         <MultiSelectDropdown
                           options={programOptions}

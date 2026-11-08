@@ -1,54 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email';
+import { getSession } from '@/lib/auth';
+import { getUserByEmail } from '@/lib/googleSheets';
+import { getAllProfiles } from '@/lib/profiles';
+import { escapeHtml, hmac, profileIdFor } from '@/lib/security';
+
+// 简单的内存限流：每个发送者每小时最多 20 个请求
+const RATE_LIMIT = 20;
+const RATE_WINDOW_MS = 60 * 60 * 1000;
+const recentSends = new Map<string, number[]>();
+
+function isRateLimited(senderEmail: string) {
+  const now = Date.now();
+  const sends = (recentSends.get(senderEmail) || []).filter(t => now - t < RATE_WINDOW_MS);
+  if (sends.length >= RATE_LIMIT) {
+    recentSends.set(senderEmail, sends);
+    return true;
+  }
+  sends.push(now);
+  recentSends.set(senderEmail, sends);
+  return false;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { 
-      recipientEmail, 
-      recipientName,
-      senderName,
-      senderEmail,
-      senderRole, 
-      senderTeam,
-      senderCity,
-      senderProfileUrl,
-      message,
-      requestType // 'mentor' or 'mentee'
-    } = body;
-
-    // Validate email address
-    if (!recipientEmail || 
-        recipientEmail === 'Coming soon...' || 
-        recipientEmail === 'N/A' || 
-        !recipientEmail.includes('@')) {
+    const session = await getSession();
+    if (!session) {
       return NextResponse.json(
-        { error: 'Invalid or unavailable email address. This user has not provided a valid email.' },
-        { status: 400 }
+        { error: 'Please sign in to send connection requests' },
+        { status: 401 }
       );
     }
 
+    const body = await request.json();
+    const { recipientId, message } = body;
+    const requestType = body.requestType === 'mentor' ? 'mentor' : 'mentee';
+
     // Validate message length if provided
-    if (message && message.length > 600) {
+    if (typeof message !== 'undefined' && (typeof message !== 'string' || message.length > 600)) {
       return NextResponse.json(
         { error: 'Message is too long (max 600 characters)' },
         { status: 400 }
       );
     }
 
-    // Generate unique token for this connection request
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    // Sender details come from the signed-in user's own row, never from the request body
+    const sender = await getUserByEmail(session.email);
+    if (!sender) {
+      return NextResponse.json({ error: 'Your account could not be found' }, { status: 404 });
+    }
+
+    // Recipient is looked up by public profile ID; their email is never sent to the browser
+    const recipient = (await getAllProfiles()).find(profile => profile.id === recipientId);
+    if (!recipient || !recipient.email) {
+      return NextResponse.json(
+        { error: 'This user has not provided a valid email address yet. They cannot receive connection requests at this time.' },
+        { status: 400 }
+      );
+    }
+
+    if (recipient.email.toLowerCase() === sender.email.toLowerCase()) {
+      return NextResponse.json({ error: 'You cannot send a connection request to yourself' }, { status: 400 });
+    }
+
+    if (isRateLimited(sender.email.toLowerCase())) {
+      return NextResponse.json(
+        { error: 'You have sent too many connection requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
+    const recipientEmail = recipient.email;
+    const recipientName = escapeHtml(recipient.name || recipient.teamName || 'there');
+    const senderName = escapeHtml(`${sender.firstName || ''} ${sender.lastName || ''}`.trim() || 'A First Mentor member');
+    const senderRole = escapeHtml(sender.role === 'university' ? 'university student' : (sender.role || 'Member'));
+    const senderTeam = escapeHtml(sender.teamName || sender.universityName || sender.companyName || sender.affiliation || '');
+    const senderCity = escapeHtml(Array.from(new Set([sender.state, sender.country].filter(Boolean))).join(', '));
+    const safeMessage = escapeHtml(message || '');
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    
-    // Store connection request data for later retrieval when recipient responds
-    // In production, this should be stored in a database
-    // For now, we'll encode it in the URL (not secure for production, but works for demo)
+    const senderProfileUrl = `${baseUrl}/profile/${profileIdFor({
+      email: sender.email,
+      teamNumber: sender.teamNumber,
+      firstName: sender.firstName,
+      lastName: sender.lastName,
+    })}`;
+
+    // Connection data is carried in the response links and signed, so it can't be forged or altered
     const connectionData = Buffer.from(JSON.stringify({
-      senderEmail,
-      senderName,
-      recipientName,
-      recipientEmail
-    })).toString('base64');
+      senderEmail: sender.email,
+      senderName: `${sender.firstName || ''} ${sender.lastName || ''}`.trim(),
+      recipientName: recipient.name || recipient.teamName || '',
+      recipientEmail,
+      recipientId: recipient.id,
+    })).toString('base64url');
+    const token = hmac(`connection:${connectionData}`);
 
     // Email to recipient (person receiving the connection request)
     const recipientEmailContent = `
@@ -204,7 +249,7 @@ export async function POST(request: NextRequest) {
             ${senderTeam ? `<div class="profile-item"><span class="profile-label">Team/School:</span> ${senderTeam}</div>` : ''}
             ${senderCity ? `<div class="profile-item"><span class="profile-label">Location:</span> ${senderCity}</div>` : ''}
             <div class="profile-item">
-              <span class="profile-label">Profile:</span> <a href="${baseUrl}/profile/${encodeURIComponent(body.senderEmail || '')}" style="color: #3B82F6;">View Full Profile</a>
+              <span class="profile-label">Profile:</span> <a href="${senderProfileUrl}" style="color: #3B82F6;">View Full Profile</a>
             </div>
             <div class="profile-item">
               <span class="profile-label">Wants to:</span> ${requestType === 'mentor' ? 'Offer Mentorship' : 'Seek Mentorship'}
@@ -214,7 +259,7 @@ export async function POST(request: NextRequest) {
           ${message ? `
           <div class="message-box">
             <p style="margin: 0;"><strong>Message:</strong></p>
-            <p style="margin: 10px 0 0 0;">"${message}"</p>
+            <p style="margin: 10px 0 0 0;">"${safeMessage}"</p>
           </div>
           ` : ''}
           
@@ -257,8 +302,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Connection request sent successfully',
-      token 
+      message: 'Connection request sent successfully'
     });
   } catch (error) {
     console.error('Error sending connection request:', error);

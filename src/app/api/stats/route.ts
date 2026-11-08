@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getGoogleSheetsClient } from '@/lib/googleSheets';
 
+// 每 5 分钟重新统计一次（否则会在构建时固定为静态结果）
+export const revalidate = 300;
+
 export async function GET() {
   try {
     const sheets = await getGoogleSheetsClient();

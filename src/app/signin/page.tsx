@@ -109,7 +109,7 @@ export default function SignIn() {
                       {error === 'email_not_found' ? (
                         <>
                           This email is not registered.{' '}
-                          <Link href="/signup/choose-membership" className="font-medium underline hover:text-red-900">
+                          <Link href="/signup" className="font-medium underline hover:text-red-900">
                             Sign up here
                           </Link>
                         </>

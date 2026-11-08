@@ -61,7 +61,7 @@ export default function HowToGuide() {
           answer: [
             '• In-Person Seasonal – weekly, hands-on',
             '• Online Seasonal – weekly, remote',
-            '• On-Demand / Consulting – by session',
+            '• On-Demand – help with specific questions, as needed',
             '• Custom Program – structured curriculum',
             '• Topic Specialists – advanced, narrow topics'
           ]
@@ -78,45 +78,12 @@ export default function HowToGuide() {
       ]
     },
     {
-      id: 'paid-mentoring',
-      title: '3. Paid Mentoring',
-      questions: [
-        {
-          id: 'q6',
-          question: 'Q6. How does paid mentoring work?',
-          answer: [
-            'Mentors set their rates; teams book sessions directly with them.',
-            'All agreements are made between mentors and teams.'
-          ]
-        },
-        {
-          id: 'q7',
-          question: 'Q7. When should a team consider paid mentoring?',
-          answer: [
-            'When you need:',
-            '• Advanced technical guidance',
-            '• Structured training',
-            '• Reliable, continuous support',
-            '• Skills not available within your community'
-          ]
-        },
-        {
-          id: 'q8',
-          question: 'Q8. How do we maintain student leadership when using paid mentors?',
-          answer: [
-            'Keep students leading decisions.',
-            'Mentors should guide, not build or run the team.'
-          ]
-        }
-      ]
-    },
-    {
       id: 'becoming-mentor',
-      title: '4. Becoming a Mentor',
+      title: '3. Becoming a Mentor',
       questions: [
         {
           id: 'q9',
-          question: 'Q9. How do I become a volunteer mentor?',
+          question: 'Q6. How do I become a volunteer mentor?',
           answer: [
             'Sign up on our platform, select your areas of expertise, and complete the mentor profile.',
             'We welcome volunteers from high school, college, and industry.'
@@ -124,7 +91,7 @@ export default function HowToGuide() {
         },
         {
           id: 'q10',
-          question: 'Q10. How can student mentors (e.g., FTC helping FLL) contribute effectively?',
+          question: 'Q7. How can student mentors (e.g., FTC helping FLL) contribute effectively?',
           answer: [
             'Provide guidance, share experience, and support—not replace—team members.',
             'Focus on teaching skills, not doing the work.'
@@ -134,11 +101,11 @@ export default function HowToGuide() {
     },
     {
       id: 'working-with-mentors',
-      title: '5. Working With Mentors',
+      title: '4. Working With Mentors',
       questions: [
         {
           id: 'q11',
-          question: 'Q11. How do I prepare for the first mentoring session?',
+          question: 'Q8. How do I prepare for the first mentoring session?',
           answer: [
             'Bring your robot, code, notebook, and a list of questions.',
             'Know your goals for the session.'
@@ -146,7 +113,7 @@ export default function HowToGuide() {
         },
         {
           id: 'q12',
-          question: 'Q12. How should teams communicate expectations with mentors?',
+          question: 'Q9. How should teams communicate expectations with mentors?',
           answer: [
             'Agree on meeting frequency, communication method, roles, and boundaries.',
             'Keep expectations clear and documented.'
@@ -154,18 +121,18 @@ export default function HowToGuide() {
         },
         {
           id: 'q13',
-          question: 'Q13. How do I keep mentoring sessions productive?',
+          question: 'Q10. How do I keep mentoring sessions productive?',
           answer: 'Set goals, assign roles, and review progress at the end of each session.'
         }
       ]
     },
     {
       id: 'challenges',
-      title: '6. If Challenges Come Up',
+      title: '5. If Challenges Come Up',
       questions: [
         {
           id: 'q14',
-          question: 'Q14. What should I do if the mentoring relationship isn\'t working?',
+          question: 'Q11. What should I do if the mentoring relationship isn\'t working?',
           answer: [
             'Communicate openly first.',
             'If needed, request a mentor change through our platform.'
@@ -173,23 +140,23 @@ export default function HowToGuide() {
         },
         {
           id: 'q15',
-          question: 'Q15. What if the mentor\'s expertise doesn\'t fully match our needs?',
-          answer: 'You can add a second mentor or book a topic specialist for specific areas.'
+          question: 'Q12. What if the mentor\'s expertise doesn\'t fully match our needs?',
+          answer: 'You can add a second mentor or reach out to a topic specialist for specific areas.'
         }
       ]
     },
     {
       id: 'technical',
-      title: '7. Technical How-Tos',
+      title: '6. Technical How-Tos',
       questions: [
         {
           id: 'q16',
-          question: 'Q16. How do we prepare for judging?',
+          question: 'Q13. How do we prepare for judging?',
           answer: 'Practice your presentation, organize your portfolio/notebook, and prepare a clear story about your season.'
         },
         {
           id: 'q17',
-          question: 'Q17. How do we structure an engineering portfolio or notebook?',
+          question: 'Q14. How do we structure an engineering portfolio or notebook?',
           answer: [
             'Include goals, design iterations, testing results, and reflections.',
             'Keep entries clear and student-written.'
@@ -197,7 +164,7 @@ export default function HowToGuide() {
         },
         {
           id: 'q18',
-          question: 'Q18. How do we plan the season timeline?',
+          question: 'Q15. How do we plan the season timeline?',
           answer: 'Break the season into phases: brainstorming → prototyping → building → testing → judging prep → scrimmages.'
         }
       ]

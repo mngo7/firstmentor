@@ -128,7 +128,7 @@ export default function Home() {
             Find Your Mentor
           </Link>
           <Link
-            href="/signup/choose-membership"
+            href="/signup"
             className="rounded-lg border-2 border-blue-600 px-6 py-3 text-base font-semibold text-blue-600 hover:bg-blue-50 transition-colors whitespace-nowrap"
           >
             Become a Mentor

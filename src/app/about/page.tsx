@@ -50,10 +50,10 @@ export default function About() {
               Support Diverse Mentorship
             </h2>
             <p className="text-xs text-gray-700 leading-relaxed mb-2">
-              We welcome both volunteer and paid mentors. Offering different mentoring styles helps build an inclusive, high-quality, and sustainable mentor ecosystem.
+              We welcome mentors from every background: students, alumni, coaches, and professionals. Anyone can be a mentor, a mentee, or both. For example, an FRC team member can get help with their own robot while mentoring FTC or FLL teams.
             </p>
             <p className="text-xs text-gray-700 leading-relaxed">
-              First Mentor only shares information; any agreements or payments are handled directly between mentors and mentees. First Mentor is not responsible for transactions or disputes.
+              First Mentor is free and volunteer-based. It only helps people find and contact each other; any arrangements are made directly between mentors and mentees, and First Mentor is not responsible for them.
             </p>
           </div>
 

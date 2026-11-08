@@ -17,17 +17,20 @@ export default function ProfilePage() {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const response = await fetch('/api/profiles');
+        const decodedId = decodeURIComponent(profileId);
+        const isLegacyEmailLink = decodedId.includes('@');
+        const response = await fetch(
+          isLegacyEmailLink ? `/api/profiles?email=${encodeURIComponent(decodedId)}` : '/api/profiles'
+        );
+        if (response.status === 401) {
+          throw new Error('Please sign in to view this profile');
+        }
         if (!response.ok) {
           throw new Error('Failed to fetch profiles');
         }
         
         const profiles: Profile[] = await response.json();
-        
-        // Find profile by email (since profileId might be email)
-        const foundProfile = profiles.find(
-          p => p.email === decodeURIComponent(profileId) || p.id === profileId
-        );
+        const foundProfile = isLegacyEmailLink ? profiles[0] : profiles.find(p => p.id === decodedId);
         
         if (foundProfile) {
           setProfile(foundProfile);
@@ -36,7 +39,7 @@ export default function ProfilePage() {
         }
       } catch (err) {
         console.error('Error fetching profile:', err);
-        setError('Failed to load profile');
+        setError(err instanceof Error && err.message.startsWith('Please sign in') ? err.message : 'Failed to load profile');
       } finally {
         setLoading(false);
       }

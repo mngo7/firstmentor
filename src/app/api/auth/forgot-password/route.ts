@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getUserByEmail, updatePasswordResetToken } from '@/lib/googleSheets';
-import { sendPasswordResetEmail, generateVerificationToken } from '@/lib/email';
+import { getUserByEmail } from '@/lib/googleSheets';
+import { sendPasswordResetEmail } from '@/lib/email';
+import { createPasswordResetToken } from '@/lib/auth';
+
+const GENERIC_MESSAGE = 'If your email is registered, you will receive a password reset link shortly.';
 
 export async function POST(request: Request) {
   try {
@@ -22,33 +25,23 @@ export async function POST(request: Request) {
       console.log('⚠️ User not found, but returning success for security');
       return NextResponse.json({ 
         status: 'success',
-        message: 'If your email is registered, you will receive a password reset link shortly.' 
+        message: GENERIC_MESSAGE
       });
     }
 
-    // 2. 生成密码重置token
-    const resetToken = generateVerificationToken();
-    
-    // 3. 设置token过期时间（1小时）
-    const expiry = new Date();
-    expiry.setHours(expiry.getHours() + 1);
-    console.log('⏰ Token expiry set to:', expiry.toISOString());
-    
-    // 4. 保存token到数据库
-    await updatePasswordResetToken(email, resetToken, expiry);
-    console.log('✅ Reset token saved to database');
+    // 2. 生成签名的密码重置token（1小时过期，密码修改后失效）
+    const resetToken = await createPasswordResetToken(user.email, user.password);
 
-    // 5. 发送重置密码邮件
+    // 3. 发送重置密码邮件
     console.log('📧 Preparing to send password reset email to:', email);
     try {
-      await sendPasswordResetEmail(email, resetToken);
+      await sendPasswordResetEmail(user.email, resetToken);
       console.log('✅ Password reset email sent successfully');
     } catch (emailError) {
       console.error('❌ Failed to send password reset email:', emailError);
       return NextResponse.json(
         { 
-          error: 'Failed to send reset email. Please try again later.',
-          details: emailError instanceof Error ? emailError.message : 'Unknown error'
+          error: 'Failed to send reset email. Please try again later.'
         },
         { status: 500 }
       );
@@ -56,15 +49,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ 
       status: 'success',
-      message: 'Password reset link has been sent to your email.' 
+      message: GENERIC_MESSAGE
     });
     
   } catch (error) {
     console.error('❌ Forgot password error:', error);
     return NextResponse.json(
       { 
-        error: 'Failed to process password reset request',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Failed to process password reset request'
       },
       { status: 500 }
     );

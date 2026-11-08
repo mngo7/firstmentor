@@ -156,7 +156,7 @@ export default function Navbar() {
                       Sign In
                     </Link>
                     <Link
-                      href="/signup/choose-membership"
+                      href="/signup"
                       className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors text-sm"
                       onClick={() => setShowAuthModal(false)}
                     >
@@ -270,7 +270,7 @@ export default function Navbar() {
                       Sign In
                     </Link>
                     <Link
-                      href="/signup/choose-membership"
+                      href="/signup"
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700 mt-2"
                     >

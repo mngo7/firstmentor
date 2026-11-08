@@ -1,14 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
 import Link from 'next/link';
 
-type MembershipType = 'general' | 'pro';
-
 interface FormData {
-  membershipType: MembershipType;
   firstName: string;
   lastName: string;
   role: 'high-school' | 'university' | 'coach' | 'professional' | 'others';
@@ -17,10 +14,7 @@ interface FormData {
   major: string;
   jobCategory: string;
   otherSpecialties: string;
-  mentorshipType: string[];
   volunteerHoursCreditedTo: string;
-  hourlyRateRange: string;
-  contributeTo: string;
   country: string;
   state: string;
   zipCode: string;
@@ -146,20 +140,7 @@ const stateOptions = [
 
 export default function SignUp() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  
-  // Get membership type from URL query parameter
-  const membershipTypeFromUrl = searchParams.get('type') as MembershipType | null;
-  
-  // Redirect to choose-membership if no type specified
-  useEffect(() => {
-    if (!membershipTypeFromUrl) {
-      router.push('/signup/choose-membership');
-    }
-  }, [membershipTypeFromUrl, router]);
-
   const [formData, setFormData] = useState<FormData>({
-    membershipType: membershipTypeFromUrl || 'general',
     firstName: '',
     lastName: '',
     role: 'high-school',
@@ -168,10 +149,7 @@ export default function SignUp() {
     major: '',
     jobCategory: '',
     otherSpecialties: '',
-    mentorshipType: [],
     volunteerHoursCreditedTo: '',
-    hourlyRateRange: '',
-    contributeTo: '',
     country: '',
     state: '',
     zipCode: '',
@@ -219,47 +197,15 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      // For general members, only require email and password
-      if (formData.membershipType === 'general') {
-        if (!formData.email || !formData.password || !formData.confirmPassword) {
-          throw new Error('Email and password are required');
-        }
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error('Passwords do not match');
-        }
-
-        const generalMemberData = {
-          membershipType: 'general',
-          email: formData.email,
-          password: formData.password,
-        };
-
-        const response = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(generalMemberData),
-        });
-
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.message || 'Failed to sign up');
-        }
-
-        alert('Account created successfully! Please check your email to verify your account.');
-        router.push('/signin');
-        return;
-      }
-
-      // For pro members, require full form validation
       if (formData.password !== formData.confirmPassword) {
         throw new Error('Passwords do not match');
+      }
+      if (formData.userType.length === 0) {
+        throw new Error('Please choose whether you want to be a mentor, a mentee, or both');
       }
 
       // 将表单数据映射到Google Sheet列
       const sheetData = {
-        membershipType: 'pro',                    // New Column (to be added)
         firstName: formData.firstName,             // Column D
         lastName: formData.lastName,               // Column R
         role: formData.role,                      // Column Q
@@ -267,12 +213,8 @@ export default function SignUp() {
         teamNumber: formData.teamNumber,          // Column E (high-school/coach)
         teamName: formData.teamName,              // Column F (high-school/coach)
         affiliation: formData.affiliation,        // Y/Z/AA based on role
-        volunteerMentoring: formData.mentorshipType.includes('volunteer') ? 'Yes' : '',  // Column AG
-        paidMentoring: formData.mentorshipType.includes('paid') ? 'Yes' : '',            // Column AH
-        hourlyRateRange: formData.hourlyRateRange,                                        // Column AI
         mentorPrograms: formData.mentorPrograms.join(', '),                              // Column AJ
         volunteerHoursCreditedTo: formData.volunteerHoursCreditedTo,                     // Column S
-        contributeTo: formData.contributeTo,       // Column S (backup/legacy)
         country: formData.country,                // Column A
         state: formData.state,                    // Column B
         postCode: formData.zipCode,               // Column T
@@ -331,28 +273,6 @@ export default function SignUp() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {/* Membership Type Header */}
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {formData.membershipType === 'general' ? 'General Member' : 'Pro Member'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {formData.membershipType === 'general' 
-                    ? 'Quick signup - Only email required' 
-                    : 'Full access with complete profile'}
-                </p>
-              </div>
-              <Link 
-                href="/signup/choose-membership"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Change
-              </Link>
-            </div>
-          </div>
-
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
             Create Your Account
           </h2>
@@ -404,9 +324,6 @@ export default function SignUp() {
               />
             </div>
 
-            {/* Pro Member Fields - Only show for pro members */}
-            {formData.membershipType === 'pro' && (
-              <>
                 {/* Basic Information */}
                 <div className="border-t pt-6 mt-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Information</h3>
@@ -616,88 +533,6 @@ export default function SignUp() {
               )}
             </div>
 
-            {/* Mentorship Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mentorship Type
-              </label>
-              <div className="space-y-2">
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    id="volunteer-mentoring"
-                    checked={formData.mentorshipType.includes('volunteer')}
-                    onChange={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        mentorshipType: prev.mentorshipType.includes('volunteer')
-                          ? prev.mentorshipType.filter(t => t !== 'volunteer')
-                          : [...prev.mentorshipType, 'volunteer']
-                      }));
-                    }}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
-                  />
-                  <label htmlFor="volunteer-mentoring" className="ml-2 text-sm text-gray-700">
-                    Volunteer Mentoring
-                  </label>
-                </div>
-                
-                {formData.mentorshipType.includes('volunteer') && (
-                  <div className="ml-6 mt-2">
-                    <label htmlFor="volunteerHoursCreditedTo" className="block text-sm text-gray-600 mb-1">
-                      Volunteer hours credited to which team/person
-                    </label>
-                    <input
-                      type="text"
-                      id="volunteerHoursCreditedTo"
-                      name="volunteerHoursCreditedTo"
-                      placeholder="Enter team number or person name"
-                      className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      value={formData.volunteerHoursCreditedTo}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                )}
-
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    id="paid-mentoring"
-                    checked={formData.mentorshipType.includes('paid')}
-                    onChange={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        mentorshipType: prev.mentorshipType.includes('paid')
-                          ? prev.mentorshipType.filter(t => t !== 'paid')
-                          : [...prev.mentorshipType, 'paid']
-                      }));
-                    }}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
-                  />
-                  <label htmlFor="paid-mentoring" className="ml-2 text-sm text-gray-700">
-                    Paid Mentoring
-                  </label>
-                </div>
-                
-                {formData.mentorshipType.includes('paid') && (
-                  <div className="ml-6 mt-2">
-                    <label htmlFor="hourlyRateRange" className="block text-sm text-gray-600 mb-1">
-                      Hourly rate range ($)
-                    </label>
-                    <input
-                      type="text"
-                      id="hourlyRateRange"
-                      name="hourlyRateRange"
-                      placeholder="e.g., $50-$100"
-                      className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      value={formData.hourlyRateRange}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Location */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
@@ -765,10 +600,10 @@ export default function SignUp() {
             <div>
               <div className="flex items-center gap-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  I want to be a
+                  I want to be a *
                 </label>
                 <span className="text-xs text-gray-500 italic">
-                  (You can choose both mentor and mentee)
+                  (Choose one or both. For example, an FRC team member can be a mentee and also mentor FTC or FLL teams.)
                 </span>
               </div>
               <div className="mt-2 space-y-2">
@@ -805,7 +640,7 @@ export default function SignUp() {
                 {/* Programs */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Programs (Mentoring preference)
+                    Programs you can mentor (any program, not just your own)
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     {programOptions.map(option => (
@@ -888,6 +723,22 @@ export default function SignUp() {
                       </label>
                     ))}
                   </div>
+                </div>
+
+                {/* Volunteer hours */}
+                <div>
+                  <label htmlFor="volunteerHoursCreditedTo" className="block text-sm font-medium text-gray-700 mb-2">
+                    Volunteer hours credited to which team/person (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    id="volunteerHoursCreditedTo"
+                    name="volunteerHoursCreditedTo"
+                    placeholder="Enter team number or person name"
+                    className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={formData.volunteerHoursCreditedTo}
+                    onChange={handleInputChange}
+                  />
                 </div>
               </div>
             )}
@@ -1016,8 +867,6 @@ export default function SignUp() {
               </div>
               <p className="text-xs text-gray-500 italic mt-2">Share your LinkedIn or website for more opportunities.</p>
             </div>
-              </>
-            )}
 
             {error && (
               <div className="text-red-600 text-sm">
