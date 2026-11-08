@@ -156,26 +156,8 @@ export async function getUserByEmail(email: string) {
       const emailInSheet = row[6]; // Column G (index 6) is email
       
       if (emailInSheet && emailInSheet.toLowerCase() === email.toLowerCase()) {
-        console.log('📊 Row data debug:', {
-          rowIndex: i,
-          rowLength: row.length,
-          column30: row[30], // Column AE - Verification Token
-          column31: row[31], // Column AF - Verification Status
-          column36: row[36], // Column AK - Membership Type
-          lastFewColumns: row.slice(28), // Show columns from index 28 onwards
-        });
-        
         const verifiedValue = row[31]; // Column AF - Verification Status
         const isVerified = verifiedValue && verifiedValue.toLowerCase() === 'yes';
-        
-        console.log('🔍 getUserByEmail found user:', {
-          email: row[6],
-          hasPassword: !!row[23],
-          passwordLength: row[23]?.length || 0,
-          verifiedRawValue: verifiedValue,
-          isVerified: isVerified,
-          membershipType: row[36] || 'pro', // Default to 'pro' for existing users
-        });
         
         return {
           rowIndex: i, // 保存行索引，用于更新

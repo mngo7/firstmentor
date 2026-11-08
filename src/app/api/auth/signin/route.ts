@@ -27,14 +27,6 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('✅ User found:', {
-      email: user.email,
-      hasPassword: !!user.password,
-      passwordLength: user.password?.length || 0,
-      isVerified: user.isVerified,
-      firstName: user.firstName,
-    });
-
     // 3. 检查邮箱是否已验证
     if (!user.isVerified) {
       console.log('❌ Email not verified');
@@ -46,12 +38,8 @@ export async function POST(request: Request) {
 
     // 4. 验证密码
     console.log('🔐 Verifying password...');
-    console.log('   Password from form length:', password.length);
-    console.log('   Password from DB length:', user.password?.length || 0);
-    console.log('   Password from DB first 10 chars:', user.password?.substring(0, 10) || 'EMPTY');
     
     const isPasswordValid = await bcrypt.compare(password, user.password || '');
-    console.log('   Password valid?', isPasswordValid);
     
     if (!isPasswordValid) {
       console.log('❌ Invalid password');

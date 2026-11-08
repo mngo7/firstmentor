@@ -28,7 +28,6 @@ export async function POST(request: Request) {
 
     // 2. 生成密码重置token
     const resetToken = generateVerificationToken();
-    console.log('🔑 Generated reset token:', resetToken.substring(0, 10) + '...');
     
     // 3. 设置token过期时间（1小时）
     const expiry = new Date();

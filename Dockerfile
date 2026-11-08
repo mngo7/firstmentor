@@ -28,9 +28,7 @@ WORKDIR /app
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Install sharp for image optimization
 RUN apk add --no-cache libc6-compat
-RUN npm install -g sharp
 
 # Create a non-root user
 RUN addgroup --system --gid 1001 nodejs
@@ -40,6 +38,10 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+
+# Standalone tracing misses sharp's native binaries, so copy them explicitly
+COPY --from=builder /app/node_modules/sharp ./node_modules/sharp
+COPY --from=builder /app/node_modules/@img ./node_modules/@img
 
 # Copy .env.local after build (allows env changes without rebuild)
 COPY .env.local ./.env.local

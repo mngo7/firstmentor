@@ -29,15 +29,9 @@ export async function POST(request: Request) {
 
     // 3. 生成验证token
     const verificationToken = generateVerificationToken();
-    console.log('🔑 Generated verification token:', verificationToken.substring(0, 10) + '...');
 
     // 4. 密码加密
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    console.log('🔐 Password hashed:', {
-      originalLength: data.password.length,
-      hashedLength: hashedPassword.length,
-      hashedPreview: hashedPassword.substring(0, 20) + '...',
-    });
     
     // 5. 准备表单数据
     let formData;
@@ -81,11 +75,6 @@ export async function POST(request: Request) {
     // 6. 转换数据并保存到 Google Sheet
     console.log('💾 Saving user data to Google Sheets...');
     const rowData = convertFormDataToSheetRow(formData);
-    console.log('📊 Row data length:', rowData.length);
-    console.log('📊 Row data[23] (password column X):', rowData[23] ? rowData[23].substring(0, 20) + '...' : 'EMPTY');
-    console.log('📊 Row data[30] (token column AE):', rowData[30] ? rowData[30].substring(0, 20) + '...' : 'EMPTY');
-    console.log('📊 Row data[31] (verified column AF):', rowData[31]);
-    console.log('📊 Row data[36] (membershipType column AK):', rowData[36]);
     
     await appendToSheet(rowData);
     console.log('✅ User data saved successfully');

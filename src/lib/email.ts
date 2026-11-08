@@ -62,7 +62,6 @@ export async function sendVerificationEmail(email: string, token: string) {
   const transporter = createEmailTransporter();
   
   const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/auth/verify-email?token=${token}`;
-  console.log('   Verification URL:', verificationUrl);
   
   const mailOptions = {
     from: `"Mentor Search" <${process.env.EMAIL_USER}>`,
@@ -116,7 +115,6 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   const transporter = createEmailTransporter();
   
   const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/reset-password/${token}`;
-  console.log('   Reset URL:', resetUrl);
   
   const mailOptions = {
     from: `"First Mentor" <${process.env.EMAIL_USER}>`,

@@ -40,16 +40,6 @@ async function getSpreadsheetData() {
       // Get the header row to find the column names
       const headers = sheet.headerValues;
       
-      // Debug: log first row data to verify structure
-      if (idx === 0) {
-        console.log('📊 First row data sample:', {
-          columnA: rowData[headers[0]],
-          columnD: rowData[headers[3]],
-          columnG: rowData[headers[6]],
-          columnGdirect: row.get(headers[6]),
-        });
-      }
-      
       // Find the index of our target columns
       const countryIndex = 0;   // Column A is index 0
       const stateIndex = 1;     // Column B is index 1
