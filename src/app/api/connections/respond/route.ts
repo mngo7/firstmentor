@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email';
-import { escapeHtml, hmac, safeEqual } from '@/lib/security';
+import { escapeHtml, hmac, safeEqual, appUrl } from '@/lib/security';
 
 const VALID_RESPONSES = ['accept', 'maybe', 'decline'];
 
@@ -12,12 +12,12 @@ export async function GET(request: NextRequest) {
     const dataParam = searchParams.get('data');
 
     if (!token || !response || !dataParam || !VALID_RESPONSES.includes(response)) {
-      return NextResponse.redirect(new URL('/?error=invalid-request', request.url));
+      return NextResponse.redirect(appUrl('/?error=invalid-request', request.url));
     }
 
     // The link is signed when the request is sent; reject anything forged or altered
     if (!safeEqual(token, hmac(`connection:${dataParam}`))) {
-      return NextResponse.redirect(new URL('/?error=invalid-request', request.url));
+      return NextResponse.redirect(appUrl('/?error=invalid-request', request.url));
     }
 
     // Decode connection data
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       connectionData = JSON.parse(Buffer.from(dataParam, 'base64url').toString('utf-8'));
     } catch (error) {
       console.error('Error decoding connection data:', error);
-      return NextResponse.redirect(new URL('/?error=invalid-data', request.url));
+      return NextResponse.redirect(appUrl('/?error=invalid-data', request.url));
     }
 
     const { senderEmail, recipientId } = connectionData;
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error processing response:', error);
-    return NextResponse.redirect(new URL('/?error=processing-failed', request.url));
+    return NextResponse.redirect(appUrl('/?error=processing-failed', request.url));
   }
 }
 

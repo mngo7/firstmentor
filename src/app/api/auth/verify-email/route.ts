@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { appUrl } from '@/lib/security';
 import { getUserByVerificationToken, updateEmailVerification } from '@/lib/googleSheets';
 import { sendWelcomeEmail } from '@/lib/email';
 
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
 
     // 5. 重定向到登录页面，带上成功消息
     return NextResponse.redirect(
-      new URL('/signin?verified=true', request.url)
+      appUrl('/signin?verified=true', request.url)
     );
 
   } catch (error) {

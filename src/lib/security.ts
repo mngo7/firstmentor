@@ -39,3 +39,9 @@ export function escapeHtml(value: unknown): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+// Absolute URL on the public site. Inside the container request.url points at 0.0.0.0:3800,
+// so redirects must be built from the configured base URL instead.
+export function appUrl(path: string, requestUrl: string): URL {
+  return new URL(path, process.env.NEXT_PUBLIC_BASE_URL || requestUrl);
+}
