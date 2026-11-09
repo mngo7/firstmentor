@@ -2,12 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import SearchableSelect from '@/components/SearchableSelect';
 
 const PROGRAMS = ['FLL Explore', 'FLL Challenge', 'FTC', 'FRC'];
 const MAX_SUBJECT = 150;
 const MAX_MESSAGE = 5000;
-
-type Audience = 'listed' | 'members' | 'all';
 
 interface PreviewTeam {
   id: string;
@@ -46,61 +45,13 @@ function CheckboxGroup({ options, selected, onChange }: { options: { id: string;
   );
 }
 
-function MultiSelectList({ label, options, selected, onChange, placeholder }: { label: string; options: string[]; selected: string[]; onChange: (v: string[]) => void; placeholder: string }) {
-  const [query, setQuery] = useState('');
-  const shown = options.filter(o => o.toLowerCase().includes(query.toLowerCase())).slice(0, 100);
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      {selected.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-2">
-          {selected.map(v => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => onChange(selected.filter(s => s !== v))}
-              className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200"
-            >
-              {v} ✕
-            </button>
-          ))}
-        </div>
-      )}
-      <input
-        type="text"
-        value={query}
-        onChange={e => setQuery(e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      />
-      <div className="mt-1 max-h-40 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
-        {shown.map(o => (
-          <label key={o} className="flex items-center px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">
-            <input
-              type="checkbox"
-              className="h-4 w-4 text-blue-600 rounded"
-              checked={selected.includes(o)}
-              onChange={() => onChange(selected.includes(o) ? selected.filter(v => v !== o) : [...selected, o])}
-            />
-            <span className="ml-2">{o}</span>
-          </label>
-        ))}
-        {shown.length === 0 && <p className="px-3 py-2 text-sm text-gray-400">No matches</p>}
-      </div>
-      <p className="mt-1 text-xs text-gray-500">{selected.length === 0 ? 'Any' : `${selected.length} selected`}</p>
-    </div>
-  );
-}
-
 export default function MessagesPage() {
   const [authState, setAuthState] = useState<'loading' | 'signed-out' | 'signed-in'>('loading');
   const [locations, setLocations] = useState<{ countries: string[]; statesByCountry: Record<string, string[]> }>({ countries: [], statesByCountry: {} });
 
-  const [audience, setAudience] = useState<Audience>('listed');
   const [programs, setPrograms] = useState<string[]>([]);
   const [countries, setCountries] = useState<string[]>([]);
   const [states, setStates] = useState<string[]>([]);
-  const [memberRoles, setMemberRoles] = useState<string[]>([]);
   const [teamNumbersText, setTeamNumbersText] = useState('');
 
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -140,14 +91,15 @@ export default function MessagesPage() {
     setStates(prev => prev.filter(s => stateOptions.includes(s)));
   }, [stateOptions]);
 
+  // For now messages always go to listed teams
   const filters = useMemo(() => ({
-    audience,
+    audience: 'listed',
     programs,
     countries,
     states,
-    memberRoles: audience === 'listed' ? [] : memberRoles,
+    memberRoles: [],
     teamNumbers: teamNumbersText.split(/[\s,]+/).map(t => t.replace(/^#/, '').trim()).filter(Boolean),
-  }), [audience, programs, countries, states, memberRoles, teamNumbersText]);
+  }), [programs, countries, states, teamNumbersText]);
 
   useEffect(() => {
     if (authState !== 'signed-in') return;
@@ -213,7 +165,7 @@ export default function MessagesPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="bg-white rounded-lg shadow p-8 max-w-md text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Message Teams</h1>
-          <p className="text-gray-600 mb-6">Sign in to send messages to teams and members on First Mentor.</p>
+          <p className="text-gray-600 mb-6">Sign in to send messages to teams on First Mentor.</p>
           <div className="flex gap-3 justify-center">
             <Link href="/signin" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Sign In</Link>
             <Link href="/signup" className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Sign Up</Link>
@@ -228,29 +180,13 @@ export default function MessagesPage() {
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900">Message Teams</h1>
         <p className="text-gray-600 mt-1 mb-8">
-          Send one message to many teams or members at once. Recipients see your name and team. Replies go to your email and your inbox.
+          Send one message to many listed teams at once. Teams see your name and team. Replies go to your email and your inbox.
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Filters */}
           <section className="lg:col-span-2 bg-white rounded-lg shadow p-6 space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">1. Choose recipients</h2>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Send to</label>
-              <div className="space-y-2">
-                {([
-                  ['listed', 'Listed teams'],
-                  ['members', 'First Mentor members'],
-                  ['all', 'Both'],
-                ] as [Audience, string][]).map(([id, name]) => (
-                  <label key={id} className="flex items-center text-sm text-gray-700">
-                    <input type="radio" name="audience" className="h-4 w-4 text-blue-600" checked={audience === id} onChange={() => setAudience(id)} />
-                    <span className="ml-2">{name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            <h2 className="text-lg font-semibold text-gray-900">1. Choose teams</h2>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Program</label>
@@ -258,16 +194,8 @@ export default function MessagesPage() {
               <p className="mt-1 text-xs text-gray-500">{programs.length === 0 ? 'All programs' : ''}</p>
             </div>
 
-            {audience !== 'listed' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Members who are</label>
-                <CheckboxGroup options={[{ id: 'mentor', name: 'Mentors' }, { id: 'mentee', name: 'Mentees' }]} selected={memberRoles} onChange={setMemberRoles} />
-                <p className="mt-1 text-xs text-gray-500">{memberRoles.length === 0 ? 'Mentors and mentees' : ''}</p>
-              </div>
-            )}
-
-            <MultiSelectList label="Country" options={locations.countries} selected={countries} onChange={setCountries} placeholder="Search countries..." />
-            <MultiSelectList label="State / province" options={stateOptions} selected={states} onChange={setStates} placeholder="Search states..." />
+            <SearchableSelect multiple label="Country" options={locations.countries} value={countries} onChange={setCountries} placeholder="All countries" />
+            <SearchableSelect multiple label="State / province" options={stateOptions} value={states} onChange={setStates} placeholder="All states" emptyText="No states for the selected countries" />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Specific team numbers (optional)</label>
@@ -304,7 +232,7 @@ export default function MessagesPage() {
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50 text-gray-600 text-left sticky top-0">
                         <tr>
-                          <th className="px-3 py-2 font-medium">Team / member</th>
+                          <th className="px-3 py-2 font-medium">Team</th>
                           <th className="px-3 py-2 font-medium">Program</th>
                           <th className="px-3 py-2 font-medium">Location</th>
                         </tr>
@@ -314,7 +242,6 @@ export default function MessagesPage() {
                           <tr key={`${t.id}-${i}`}>
                             <td className="px-3 py-1.5 text-gray-900">
                               {t.teamNumber ? `#${t.teamNumber} ` : ''}{t.teamName || t.name}
-                              {!t.isListedTeam && <span className="ml-2 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">member</span>}
                             </td>
                             <td className="px-3 py-1.5 text-gray-600">{t.program}</td>
                             <td className="px-3 py-1.5 text-gray-600">{[t.state !== t.country ? t.state : '', t.country].filter(Boolean).join(', ')}</td>
@@ -361,7 +288,7 @@ export default function MessagesPage() {
                 <p className="text-xs text-gray-500 text-right">{message.length}/{MAX_MESSAGE}</p>
               </div>
               <p className="text-xs text-gray-500">
-                Each email greets the recipient by name and includes your name and team. Replies go to your email and to your First Mentor inbox. Listed teams also get a link to join First Mentor.
+                Each email greets the team and includes your name and team, plus a link for the team to join First Mentor. Replies go to your email and to your First Mentor inbox.
               </p>
 
               {result && (

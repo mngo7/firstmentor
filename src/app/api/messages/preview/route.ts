@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please sign in to send messages' }, { status: 401 });
     }
 
-    const filters = parseFilters(await request.json());
+    // For now messages can only go to listed teams
+    const filters = { ...parseFilters(await request.json()), audience: 'listed' as const, memberRoles: [] };
     const [recipients, usage] = await Promise.all([
       findRecipients(filters, session.email),
       getUsageToday(session.email),

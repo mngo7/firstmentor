@@ -31,7 +31,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const filters = parseFilters(body.filters);
+    // For now messages can only go to listed teams
+    const filters = { ...parseFilters(body.filters), audience: 'listed' as const, memberRoles: [] };
     const subject = String(body.subject || '').replace(/[\r\n]+/g, ' ').trim();
     const message = String(body.message || '').trim();
 

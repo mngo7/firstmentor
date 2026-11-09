@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import MultiSelectDropdown from '@/components/MultiSelectDropdown';
+import SearchableSelect from '@/components/SearchableSelect';
+import { COUNTRIES } from '@/lib/countryList';
 
 const specialtyOptions = [
   { id: 'design-cad', name: 'Design and CAD' },
@@ -34,6 +36,15 @@ const experienceOptions = [
   { id: 'limited', name: 'Limited - I have helped a team briefly' },
   { id: 'none', name: 'None - I am new to mentoring' },
   { id: 'other', name: 'I have other relevant experience' },
+];
+
+const US_STATES = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'District of Columbia',
+  'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine',
+  'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada',
+  'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon',
+  'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia',
+  'Washington', 'West Virginia', 'Wisconsin', 'Wyoming',
 ];
 
 const programOptions = [
@@ -558,11 +569,16 @@ export default function MyAccountPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
                   {isEditing ? (
-                    <input
-                      type="text"
+                    <SearchableSelect
+                      options={COUNTRIES}
                       value={editedUser?.country || ''}
-                      onChange={(e) => handleChange('country', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onChange={country => editedUser && setEditedUser({
+                        ...editedUser,
+                        country,
+                        // Outside the US the sheet stores the country in the state column
+                        state: country === 'United States' ? (editedUser.country === 'United States' ? editedUser.state : '') : country,
+                      })}
+                      placeholder="Select country"
                     />
                   ) : (
                     <p className="px-3 py-2 bg-gray-50 rounded-lg">{user.country || 'N/A'}</p>
@@ -572,12 +588,16 @@ export default function MyAccountPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      value={editedUser?.state || ''}
-                      onChange={(e) => handleChange('state', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                    editedUser?.country === 'United States' ? (
+                      <SearchableSelect
+                        options={US_STATES}
+                        value={editedUser?.state || ''}
+                        onChange={state => handleChange('state', state)}
+                        placeholder="Select state"
+                      />
+                    ) : (
+                      <p className="px-3 py-2 bg-gray-50 rounded-lg text-gray-500 text-sm">Only needed for the United States</p>
+                    )
                   ) : (
                     <p className="px-3 py-2 bg-gray-50 rounded-lg">{user.state || 'N/A'}</p>
                   )}
