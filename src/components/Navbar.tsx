@@ -138,6 +138,12 @@ export default function Navbar() {
                   </span>
                 </div>
                 <Link
+                  href="/inbox"
+                  className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium text-sm rounded-lg hover:bg-gray-50 transition-all duration-200"
+                >
+                  Inbox
+                </Link>
+                <Link
                   href="/my-account"
                   className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium text-sm rounded-lg hover:bg-gray-50 transition-all duration-200"
                 >
@@ -265,6 +271,13 @@ export default function Navbar() {
                         {user.firstName} {user.lastName}
                       </span>
                     </div>
+                    <Link
+                      href="/inbox"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                    >
+                      Inbox
+                    </Link>
                     <Link
                       href="/my-account"
                       onClick={() => setIsMobileMenuOpen(false)}

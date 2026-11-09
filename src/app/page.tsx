@@ -4,11 +4,9 @@ import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 
 export default function Home() {
-  const [membersCount, setMembersCount] = useState(0);
   const [teamsCount, setTeamsCount] = useState(0);
   const [countriesCount, setCountriesCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [targetMembers, setTargetMembers] = useState(0);
   const [targetTeams, setTargetTeams] = useState(0);
   const [targetCountries, setTargetCountries] = useState(0);
   const statsRef = useRef<HTMLDivElement>(null);
@@ -20,7 +18,6 @@ export default function Home() {
         const response = await fetch('/api/stats');
         if (response.ok) {
           const data = await response.json();
-          setTargetMembers(data.members);
           setTargetTeams(data.listedTeams);
           setTargetCountries(data.countriesServed);
         }
@@ -50,7 +47,7 @@ export default function Home() {
   }, [isVisible]);
 
   useEffect(() => {
-    if (!isVisible || (targetMembers === 0 && targetTeams === 0)) return;
+    if (!isVisible || targetTeams === 0) return;
 
     // 动画持续时间（毫秒）
     const duration = 2000;
@@ -65,22 +62,19 @@ export default function Home() {
       
       // 使用缓动函数让动画更流畅
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-      
-      setMembersCount(Math.round(targetMembers * easeOutQuart));
       setTeamsCount(Math.round(targetTeams * easeOutQuart));
       setCountriesCount(Math.round(targetCountries * easeOutQuart));
 
       if (frame === totalFrames) {
         clearInterval(counter);
         // 确保最终值准确
-        setMembersCount(targetMembers);
         setTeamsCount(targetTeams);
         setCountriesCount(targetCountries);
       }
     }, frameDuration);
 
     return () => clearInterval(counter);
-  }, [isVisible, targetMembers, targetTeams, targetCountries]);
+  }, [isVisible, targetTeams, targetCountries]);
 
   const workProcess = [
     {
@@ -139,22 +133,13 @@ export default function Home() {
             Our Growing Global Impact
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
             <div className="text-center">
               <div className="mb-2 text-3xl md:text-4xl font-bold text-white">
                 {teamsCount.toLocaleString()}
               </div>
               <div className="text-base text-blue-100">
                 Listed Teams
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="mb-2 text-3xl md:text-4xl font-bold text-white">
-                {membersCount.toLocaleString()}
-              </div>
-              <div className="text-base text-blue-100">
-                Members
               </div>
             </div>
             

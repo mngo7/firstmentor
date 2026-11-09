@@ -90,8 +90,8 @@ function MessageDialog({
 
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
             <p className="text-sm text-gray-700">
-              <strong>📌 Privacy Note:</strong> First Mentor does not share personal emails by default. 
-              All communication is forwarded through the platform unless both sides choose to exchange contact information.
+              <strong>📌 How it works:</strong> They&apos;ll get your message by email with your name and team.
+              When they reply, it goes to your email and shows up in your First Mentor inbox.
             </p>
           </div>
 

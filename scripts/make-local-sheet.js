@@ -2,7 +2,7 @@
 // Every email address is replaced with a fake one, and passwords/tokens are cleared,
 // so the local copy can never email or log in as a real person.
 //
-// Usage (from docker-compose.local.yml): docker compose -f docker-compose.local.yml run --rm app node scripts/make-local-sheet.js
+// Usage: docker compose -f docker-compose.local.yml run --rm tools sh -c "npm ci && node scripts/make-local-sheet.js"
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');

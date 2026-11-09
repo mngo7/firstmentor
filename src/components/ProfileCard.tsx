@@ -115,7 +115,7 @@ export default function ProfileCard({ profile, autoExpand = false }: ProfileCard
       const result = await response.json();
 
       if (response.ok) {
-        alert('Connection request sent successfully! They will receive an email notification.');
+        alert('Message sent! They will get it by email, and you can follow the conversation in your Inbox.');
         setShowConnectModal(false);
       } else {
         throw new Error(result.error || 'Failed to send connection request');
@@ -305,7 +305,6 @@ export default function ProfileCard({ profile, autoExpand = false }: ProfileCard
     <div className={`flex gap-2 ${className}`}>
       {profile.isMentor && <Badge text="Mentor" variant="blue" size={size} />}
       {profile.isMentee && <Badge text="Mentee" variant="green" size={size} />}
-      {profile.isListedTeam && <Badge text="Listed team · not yet joined" variant="gray" size={size} />}
     </div>
   );
 
@@ -586,11 +585,6 @@ export default function ProfileCard({ profile, autoExpand = false }: ProfileCard
                   {profile.isMentee && (
                     <span className="inline-block px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
                       Mentee
-                    </span>
-                  )}
-                  {profile.isListedTeam && (
-                    <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium" title="This team is listed on First Mentor but hasn't created an account yet">
-                      Listed team · not yet joined
                     </span>
                   )}
                 </div>

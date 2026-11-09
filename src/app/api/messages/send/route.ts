@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getUserByEmail } from '@/lib/googleSheets';
-import { sendEmail } from '@/lib/email';
+import { sendMessage, senderFromAccount, storeMessages, StoredMessage } from '@/lib/inbox';
 import {
   MAX_BODY_LENGTH,
   MAX_SUBJECT_LENGTH,
@@ -9,8 +9,6 @@ import {
   getUsageToday,
   logMessage,
   parseFilters,
-  renderMessageEmail,
-  unsubscribeUrl,
 } from '@/lib/messaging';
 
 export const dynamic = 'force-dynamic';
@@ -18,6 +16,8 @@ export const dynamic = 'force-dynamic';
 // One bulk send at a time per member, so double-clicks can't send twice
 const inProgress = new Set<string>();
 
+// Sends the same message to many recipients. Each recipient gets their own conversation,
+// so replies from different teams stay separate in the sender's inbox.
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) {
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please verify your email before sending messages' }, { status: 403 });
     }
 
-    const { recipients } = await findRecipients(filters, sender.email);
+    const recipients = await findRecipients(filters, sender.email);
     if (recipients.length === 0) {
       return NextResponse.json({ error: 'No recipients match these filters' }, { status: 400 });
     }
@@ -64,37 +64,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const senderName = `${sender.firstName || ''} ${sender.lastName || ''}`.trim() || 'A First Mentor member';
-    const senderDetails = [
-      sender.teamNumber || sender.teamName ? `Team ${[sender.teamNumber, sender.teamName].filter(Boolean).join(' ')}` : '',
-      sender.universityName || sender.companyName || sender.affiliation || '',
-      [sender.state, sender.country].filter((v, i, a) => v && a.indexOf(v) === i).join(', '),
-    ].filter(Boolean).join(' · ');
-
     // Log before sending so the daily limit holds even if sending is interrupted
     await logMessage(sender.email, recipients.length, subject, filters);
 
-    let sent = 0;
+    const { party, details } = senderFromAccount(sender);
+    const sentMessages: StoredMessage[] = [];
     const failed: string[] = [];
-    for (const recipient of recipients) {
-      try {
-        await sendEmail({
-          to: recipient.email,
-          subject,
-          fromName: `${senderName} via First Mentor`,
-          replyTo: sender.email,
-          html: renderMessageEmail({ senderName, senderDetails, subject, body: message, recipient }),
-          headers: {
-            'List-Unsubscribe': `<${unsubscribeUrl(recipient.email)}>`,
-            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-          },
-        });
-        sent++;
-      } catch (error) {
-        console.error('Failed to send message to a recipient:', error);
-        failed.push(recipient.profiles.map(p => p.teamName || p.name).filter(Boolean).join(', ') || 'unknown');
+    try {
+      for (const recipient of recipients) {
+        try {
+          sentMessages.push(await sendMessage({ from: party, senderDetails: details, to: recipient, subject, body: message, kind: 'message', deferStore: true }));
+        } catch (error) {
+          console.error('Failed to send message to a recipient:', error);
+          failed.push(recipient.profiles.map(p => p.teamName || p.name).filter(Boolean).join(', ') || 'unknown');
+        }
       }
+    } finally {
+      // One write for the whole batch (Google Sheets limits writes per minute)
+      await storeMessages(sentMessages);
     }
+    const sent = sentMessages.length;
 
     return NextResponse.json({ sent, failed: failed.length, failedNames: failed.slice(0, 20) });
   } catch (error) {

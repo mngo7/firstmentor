@@ -1,8 +1,12 @@
 import nodemailer from 'nodemailer';
-import { generateToken } from './security';
+import { generateToken, getBaseUrl } from './security';
 
 // 创建邮件传输器
 export function createEmailTransporter() {
+  // Local testing must never reach real inboxes
+  if (process.env.LOCAL_SHEET_FILE && !/^(mailpit|localhost|127\.0\.0\.1)$/.test(process.env.EMAIL_HOST || '')) {
+    throw new Error('Refusing to send email: local test data is in use but EMAIL_HOST is not a local test server');
+  }
   console.log('📧 Creating email transporter with config:', {
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: process.env.EMAIL_PORT || '587',
@@ -38,6 +42,7 @@ export async function sendEmail({
   headers?: Record<string, string>;
 }) {
   console.log('📧 Sending email:', subject);
+
   
   const transporter = createEmailTransporter();
   
@@ -73,12 +78,12 @@ export async function sendVerificationEmail(email: string, token: string) {
   
   const transporter = createEmailTransporter();
   
-  const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/auth/verify-email?token=${token}`;
+  const verificationUrl = `${getBaseUrl() || 'http://localhost:3000'}/api/auth/verify-email?token=${token}`;
   
   const mailOptions = {
     from: `"First Mentor" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: 'Verify Your Email - Mentor Search',
+    subject: 'Verify Your Email - First Mentor',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2563eb;">Welcome to Mentor Match!</h2>
@@ -126,7 +131,7 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   
   const transporter = createEmailTransporter();
   
-  const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/reset-password/${token}`;
+  const resetUrl = `${getBaseUrl() || 'http://localhost:3000'}/reset-password/${token}`;
   
   const mailOptions = {
     from: `"First Mentor" <${process.env.EMAIL_USER}>`,
@@ -182,13 +187,13 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
   const mailOptions = {
     from: `"First Mentor" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: 'Welcome to Mentor Search!',
+    subject: 'Welcome to First Mentor!',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2563eb;">Welcome, ${firstName}!</h2>
         <p>Your email has been successfully verified. You can now access all features of Mentor Match.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/signin" 
+          <a href="${getBaseUrl() || 'http://localhost:3000'}/signin" 
              style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
             Sign In
           </a>

@@ -23,7 +23,6 @@ interface PreviewTeam {
 interface Preview {
   recipientCount: number;
   teamCount: number;
-  unsubscribedCount: number;
   remainingToday: number;
   dailyLimit: number;
   sample: PreviewTeam[];
@@ -188,7 +187,7 @@ export default function MessagesPage() {
         type: data.failed ? 'error' : 'success',
         text: data.failed
           ? `Sent to ${data.sent} recipients. ${data.failed} failed: ${data.failedNames.join(', ')}`
-          : `Sent to ${data.sent} recipient${data.sent === 1 ? '' : 's'}. Replies will go to your email.`,
+          : `Sent to ${data.sent} recipient${data.sent === 1 ? '' : 's'}. Replies will go to your email and your inbox.`,
       });
       if (!data.failed) {
         setSubject('');
@@ -229,7 +228,7 @@ export default function MessagesPage() {
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900">Message Teams</h1>
         <p className="text-gray-600 mt-1 mb-8">
-          Send one message to many teams or members at once. Recipients see your name and team, and replies go to your email.
+          Send one message to many teams or members at once. Recipients see your name and team. Replies go to your email and your inbox.
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -241,7 +240,7 @@ export default function MessagesPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Send to</label>
               <div className="space-y-2">
                 {([
-                  ['listed', 'Listed teams (not yet joined)'],
+                  ['listed', 'Listed teams'],
                   ['members', 'First Mentor members'],
                   ['all', 'Both'],
                 ] as [Audience, string][]).map(([id, name]) => (
@@ -297,9 +296,6 @@ export default function MessagesPage() {
                       <span className="text-sm text-gray-500"> ({preview.teamCount.toLocaleString()} listings; some contacts manage several teams and get one email)</span>
                     )}
                   </p>
-                  {preview.unsubscribedCount > 0 && (
-                    <p className="text-xs text-gray-500 mt-1">{preview.unsubscribedCount} unsubscribed contact{preview.unsubscribedCount === 1 ? ' is' : 's are'} excluded.</p>
-                  )}
                   <p className={`text-sm mt-1 ${overLimit ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
                     You can send to {preview.remainingToday.toLocaleString()} more recipient{preview.remainingToday === 1 ? '' : 's'} today (limit {preview.dailyLimit} per day).
                     {overLimit && ' Narrow your filters to send.'}
@@ -365,7 +361,7 @@ export default function MessagesPage() {
                 <p className="text-xs text-gray-500 text-right">{message.length}/{MAX_MESSAGE}</p>
               </div>
               <p className="text-xs text-gray-500">
-                Each email greets the recipient by name, includes your name and team, and has an unsubscribe link. Listed teams also get a link to join First Mentor.
+                Each email greets the recipient by name and includes your name and team. Replies go to your email and to your First Mentor inbox. Listed teams also get a link to join First Mentor.
               </p>
 
               {result && (

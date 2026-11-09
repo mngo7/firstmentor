@@ -46,5 +46,12 @@ export function escapeHtml(value: unknown): string {
 // Absolute URL on the public site. Inside the container request.url points at 0.0.0.0:3800,
 // so redirects must be built from the configured base URL instead.
 export function appUrl(path: string, requestUrl: string): URL {
-  return new URL(path, process.env.NEXT_PUBLIC_BASE_URL || requestUrl);
+  return new URL(path, getBaseUrl() || requestUrl);
+}
+
+// The site's public address, read when the server runs. APP_BASE_URL comes first because
+// NEXT_PUBLIC_* values are baked in when the app is built (so a local build would still
+// link to the production site).
+export function getBaseUrl(): string {
+  return process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || '';
 }

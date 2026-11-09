@@ -8,9 +8,6 @@ export async function GET() {
   try {
     const profiles = (await getAllProfiles()).filter(isVisibleProfile);
 
-    // Members = people who signed up; listed teams were imported and haven't joined yet
-    const members = profiles.filter(p => !p.isListedTeam).length;
-
     // Teams = unique (program, team number); the same number can belong to different programs
     const teams = new Set(
       profiles.filter(p => p.teamNumber).map(p => `${p.program.toLowerCase()}|${p.teamNumber}`)
@@ -20,7 +17,6 @@ export async function GET() {
 
     return NextResponse.json({
       listedTeams: teams,
-      members,
       countriesServed: countries,
     });
   } catch (error) {

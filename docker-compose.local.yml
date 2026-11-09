@@ -1,21 +1,17 @@
 # Local testing: runs the site against a local copy of the sheet, and catches all email in Mailpit.
 # Nothing here writes to the real Google Sheet or sends real email.
 #
-#   docker compose -f docker-compose.local.yml run --rm app sh -c "npm ci && node scripts/make-local-sheet.js"
-#   docker compose -f docker-compose.local.yml up
+#   docker compose -f docker-compose.local.yml run --rm tools sh -c "npm ci && node scripts/make-local-sheet.js"
+#   docker compose -f docker-compose.local.yml up --build
 #
 # Site: http://localhost:3000   Test inbox: http://localhost:8025
 services:
   app:
-    image: node:18-alpine
-    working_dir: /app
-    command: sh -c "npm ci --no-audit --no-fund && npm run dev"
+    build: .
     ports:
-      - "3000:3000"
+      - "3000:3800"
     volumes:
-      - .:/app
-      - node_modules:/app/node_modules
-      - next_cache:/app/.next
+      - ./.local-data:/app/.local-data
     environment:
       # Values here override .env.local
       LOCAL_SHEET_FILE: /app/.local-data/sheet.json
@@ -23,11 +19,20 @@ services:
       EMAIL_PORT: "1025"
       EMAIL_USER: hello@firstmentor.local
       EMAIL_PASSWORD: local-test
-      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      MAILPIT_API_URL: http://mailpit:8025
+      APP_BASE_URL: http://localhost:3000
       JWT_SECRET: local-development-secret-not-used-in-production
-      WATCHPACK_POLLING: "true"
     depends_on:
       - mailpit
+
+  # One-off helper for scripts (e.g. making the local sheet copy)
+  tools:
+    image: node:20-alpine
+    working_dir: /app
+    profiles: ["tools"]
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
 
   mailpit:
     image: axllent/mailpit:v1.20
@@ -39,4 +44,3 @@ services:
 
 volumes:
   node_modules:
-  next_cache:

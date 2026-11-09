@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const filters = parseFilters(await request.json());
-    const [{ recipients, unsubscribedCount }, usage] = await Promise.all([
+    const [recipients, usage] = await Promise.all([
       findRecipients(filters, session.email),
       getUsageToday(session.email),
     ]);
@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       recipientCount: recipients.length,
       teamCount: teams.length,
-      unsubscribedCount,
       remainingToday: usage.remaining,
       dailyLimit: usage.perMemberLimit,
       sample: teams.slice(0, 100).map(p => ({

@@ -12,7 +12,7 @@ const roleOptions = [
   { id: 'mentor', name: 'Mentors' },
   { id: 'mentee', name: 'Mentees' },
   { id: 'member', name: 'All members' },
-  { id: 'listed', name: 'Listed teams (not yet joined)' },
+  { id: 'listed', name: 'Listed teams' },
 ];
 
 const programOptions = [
